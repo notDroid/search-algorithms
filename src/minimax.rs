@@ -5,7 +5,8 @@ pub fn negamax<T: game::ZeroSumGame>(game: &mut T) -> (T::Score, Option<T::Move>
         return (score, None);
     }
 
-    let (score, game_move) = game.get_moves()
+    let (score, game_move) = game
+        .get_moves()
         .into_iter()
         .map(|game_move| {
             game.make_move(&game_move);
