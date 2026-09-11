@@ -12,14 +12,6 @@ enum Player {
 }
 
 impl Player {
-    // fn from_turn(n: usize) -> Player {
-    //     match n % 2 {
-    //         0 => Self::Red,
-    //         1 => Self::Yellow,
-    //         _ => unreachable!(),
-    //     }
-    // }
-
     fn switch(self) -> Self {
         match self {
             Player::Red => Player::Yellow,
@@ -213,7 +205,7 @@ mod tests {
         // Red 1, Yellow 2, Red 1, Yellow 2, Red 1, Yellow 2, Red 1 -> Win!
         let game = Connect4::from_sequence("1212121").unwrap();
         let score = game.terminal_score();
-        
+
         assert!(score.is_some());
         assert!(score.unwrap() < 0, "Score should be negative from perspective of the losing player");
     }
