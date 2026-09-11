@@ -193,3 +193,52 @@ impl ZeroSumGame for Connect4 {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_horizontal_win() {
+        // Red plays col 1, Yellow plays 1, Red 2, Yellow 2, Red 3, Yellow 3, Red 4 -> Win!
+        let game = Connect4::from_sequence("1122334").unwrap();
+        let score = game.terminal_score();
+        
+        assert!(score.is_some(), "Game should be terminal");
+        assert!(score.unwrap() < 0, "Score should be negative from perspective of the losing player");
+    }
+
+    #[test]
+    fn test_vertical_win() {
+        // Red 1, Yellow 2, Red 1, Yellow 2, Red 1, Yellow 2, Red 1 -> Win!
+        let game = Connect4::from_sequence("1212121").unwrap();
+        let score = game.terminal_score();
+        
+        assert!(score.is_some());
+        assert!(score.unwrap() < 0, "Score should be negative from perspective of the losing player");
+    }
+
+    #[test]
+    fn test_up_right_diagonal_win() {
+        // Builds a diagonal from (col 1, row 0) to (col 4, row 3) for Red
+        // Sequence: 1, 2, 2, 3, 3, 4, 3, 4, 4, 1, 4
+        let game = Connect4::from_sequence("12233434414").unwrap();
+        let score = game.terminal_score();
+
+        assert!(score.is_some());
+        assert!(score.unwrap() < 0, "Score should be negative from perspective of the losing player");
+    }
+    
+    #[test]
+    fn test_draw() {
+        // A full board sequence that ends in a draw
+        // (Just filling it up without connecting 4)
+        let seq = "473441442553113552155666136174332676222777";
+        let game = Connect4::from_sequence(seq).unwrap();
+        let score = game.terminal_score();
+
+        assert!(score.is_some());
+        assert!(score.unwrap() == 0, "Score should be 0 when the game is a draw");
+    }
+}
+

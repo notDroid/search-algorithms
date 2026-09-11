@@ -2,7 +2,7 @@ use search_algorithms::connect4::*;
 use search_algorithms::minimax::negamax;
 
 #[test]
-fn connect4_l3_r1_first_case() {
+fn connect4_simple() {
     let seq = "2252576253462244111563365343671351441";
     let expected_score: i32 = -1;
 
