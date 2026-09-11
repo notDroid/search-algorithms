@@ -2,6 +2,7 @@ use crate::game::{ReversibleGame, ZeroSumGame};
 
 const ROWS: usize = 6;
 const COLUMNS: usize = 7;
+const MIN_SCORE: i32 = -22;
 
 #[derive(Clone, Debug, Copy, PartialEq, Default)]
 enum Player {
@@ -31,12 +32,12 @@ impl Player {
 pub struct Column(usize);
 
 impl Column {
-    fn from(col: usize) -> Self {
+    fn try_from(col: usize) -> Result<Self, &'static str> {
         if col >= COLUMNS {
-            panic!("Column out of bounds");
+            return Err("Column out of bounds");
         }
 
-        Self(col)
+        Ok(Self(col))
     }
 
     fn index(&self) -> usize {
@@ -133,7 +134,7 @@ impl Connect4 {
                 .ok_or("Column out of bounds")?
                 .try_into()
                 .map_err(|_| "Column out of bounds")?;
-            let col = Column::from(col);
+            let col = Column::try_from(col)?;
 
             game.make_move(col);
         }
@@ -144,8 +145,8 @@ impl Connect4 {
         self.board.column_lengths()
             .iter()
             .enumerate()
-            .filter(|(_, rows)| **rows < 7)
-            .map(|(i, _)| Column::from(i))
+            .filter(|(_, rows)| **rows < ROWS)
+            .map(|(i, _)| Column::try_from(i).expect("Unreachable"))
             .collect()
     }
 
@@ -184,7 +185,9 @@ impl ZeroSumGame for Connect4 {
     fn terminal_score(&self) -> Option<Self::Score> {
         let (row, col, player) = *self.moves.last()?;
         if self.board.is_connected(row, col, player) {
-            Some((self.board.size().div_ceil(2) as i32) - 22)
+            Some((self.board.size().div_ceil(2) as i32) + MIN_SCORE)
+        } else if self.board.size() == ROWS*COLUMNS {
+            Some(0)
         } else {
             None
         }
