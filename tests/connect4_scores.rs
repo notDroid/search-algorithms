@@ -45,6 +45,12 @@ fn test_negamax_l3_r1() {
 
 #[test]
 #[ignore]
+fn test_negamax_half_pruned_l3_r1() {
+    run_test_file("tests/Test_L3_R1", |board| negamax_half_pruned(board));
+}
+
+#[test]
+#[ignore]
 fn test_negamax_pruned_l3_r1() {
     run_test_file("tests/Test_L3_R1", |board| negamax_pruned(board));
 }
