@@ -6,19 +6,25 @@ cargo test
 ### File Tests:
 ```bash
 # all
-cargo test --release -- --ignored correctness
+cargo test --release -- --ignored correctness --test-threads=<N>
 
 # target
-cargo test test_<algorithm>_<test_file> --release -- --ignored correctness
+cargo test --release --correctness -- --ignored <test_file>::<algorithm>
 
 # example
-cargo test test_negamax_pruned_l3_r1 --release -- --ignored correctness
+cargo test --release --test correctness -- --ignored l3_r1
 ```
 
 ### Metrics:
 ```bash
 # all
-cargo insta test --review --release -- --ignored metrics
+cargo insta test --review --release --test metrics -- --ignored
+
+# target
+cargo insta test --review --release --test metrics -- --ignored <test_file>::<algorithm>
+
+# example
+cargo insta test --review --release --test metrics -- --ignored l3_r1
 ```
 
 ### Benchmarks:

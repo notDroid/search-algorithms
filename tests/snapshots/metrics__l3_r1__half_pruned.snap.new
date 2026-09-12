@@ -1,0 +1,6 @@
+---
+source: tests/metrics.rs
+assertion_line: 23
+expression: avg
+---
+12542.13
