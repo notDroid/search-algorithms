@@ -2,7 +2,7 @@ use criterion::{criterion_group, criterion_main, BatchSize, Criterion};
 use std::hint::black_box;
 use std::fs;
 use search_algorithms::connect4::Connect4;
-use search_algorithms::minimax::negamax;
+use search_algorithms::minimax::{negamax, negamax_pruned};
 
 pub fn criterion_benchmark(c: &mut Criterion) {
     let contents = fs::read_to_string("tests/Test_L3_R1").expect("Failed to read file");
@@ -13,15 +13,13 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         .map(|seq| Connect4::from_sequence(seq).expect("Expected to be able to parse test sequence into game object"))
         .collect();
 
-    let mut group = c.benchmark_group("connect4_negamax");
-    // Reduce sample size since running 1000 tests takes a while
+    let mut group = c.benchmark_group("connect4_benchmarks");
     group.sample_size(10); 
     
-    group.bench_function("Test_L3_R1_Suite", |b| {
+    group.bench_function("negamax_L3_R1", |b| {
         b.iter_batched(
-            || games.clone(), // Setup: Clone the games before each iteration (not timed)
+            || games.clone(),
             |mut cloned_games| {
-                // This is the actual code being timed
                 for g in cloned_games.iter_mut() {
                     negamax(black_box(g));
                 }
@@ -29,6 +27,19 @@ pub fn criterion_benchmark(c: &mut Criterion) {
             BatchSize::SmallInput,
         )
     });
+
+    group.bench_function("negamax_pruned_L3_R1", |b| {
+        b.iter_batched(
+            || games.clone(),
+            |mut cloned_games| {
+                for g in cloned_games.iter_mut() {
+                    negamax_pruned(black_box(g));
+                }
+            },
+            BatchSize::SmallInput,
+        )
+    });
+
     group.finish();
 }
 
