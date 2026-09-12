@@ -1,5 +1,5 @@
 use std::fs;
-use search_algorithms::connect4::*;
+use search_algorithms::connect4::Connect4;
 use search_algorithms::minimax::negamax;
 
 #[test]

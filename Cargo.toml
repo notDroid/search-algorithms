@@ -4,3 +4,14 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+criterion = "0.8.2"
+
+[[bench]]
+name = "connect4_negamax"
+harness = false
+
+[profile.release]
+debug = true
+
+[profile.bench]
+debug = true
