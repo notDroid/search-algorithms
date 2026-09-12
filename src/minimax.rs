@@ -23,6 +23,41 @@ pub fn negamax<T: game::ZeroSumGame>(game: &mut T) -> (T::Score, Option<T::Move>
     (best_score.expect("Terminal should have at least move"), best_game_move)
 }
 
+fn negamax_pruned_core<T: game::ZeroSumGame>(game: &mut T, opp_best_score: Option<T::Score>) -> (T::Score, Option<T::Move>) {
+    if let Some(score) = game.terminal_score() {
+        return (score, None);
+    }
+
+    let mut best_score = None;
+    let mut best_game_move  = None;
+
+    for game_move in game.get_moves() {
+        game.make_move(&game_move);
+        let (opp_score, _) = negamax_pruned_core(game, best_score);
+        game.undo_move(&game_move);
+
+        let score = -opp_score;
+
+        if let Some(a) = opp_best_score
+            && opp_score <= a // SKIP EVEN IF EQUAL
+        {
+            return (score, None);
+        }
+
+        // DON'T TAKE EQUAL SCORES
+        if best_score.is_none_or(|best_score| best_score < score) {
+            best_score = Some(score);
+            best_game_move = Some(game_move);
+        }
+    }
+
+    (best_score.expect("Terminal should have at least move"), best_game_move)
+}
+
+pub fn negamax_pruned<T: game::ZeroSumGame>(game: &mut T) -> (T::Score, Option<T::Move>) {
+    negamax_pruned_core(game, None)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -92,6 +127,16 @@ mod tests {
     fn test_negamax_chooses_correct_path() {
         let mut game = MockGame { node: 0, history: Vec::new() };
         let (score, best_move) = negamax(&mut game);
+        
+        // P1 should choose Left (leading to node 1 -> node 4 -> score 5)
+        assert_eq!(score, 5);
+        assert_eq!(best_move, Some(MockMove::Left));
+    }
+
+    #[test]
+    fn test_negamax_pruned_chooses_correct_path() {
+        let mut game = MockGame { node: 0, history: Vec::new() };
+        let (score, best_move) = negamax_pruned(&mut game);
         
         // P1 should choose Left (leading to node 1 -> node 4 -> score 5)
         assert_eq!(score, 5);

@@ -7,7 +7,7 @@ pub trait ReversibleGame {
 }
 
 pub trait ZeroSumGame: ReversibleGame {
-    type Score: Ord + Copy + std::ops::Neg<Output = Self::Score>;
+    type Score: Ord + Copy + std::ops::Neg<Output = Self::Score> + std::fmt::Debug;
 
     fn terminal_score(&self) -> Option<Self::Score>;
 }
