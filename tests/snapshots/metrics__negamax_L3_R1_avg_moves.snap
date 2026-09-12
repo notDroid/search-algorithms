@@ -1,0 +1,5 @@
+---
+source: tests/connect4_scores.rs
+expression: avg
+---
+204043.053

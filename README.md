@@ -6,13 +6,19 @@ cargo test
 ### File Tests:
 ```bash
 # all
-cargo test --release -- --ignored
+cargo test --release -- --ignored correctness
 
 # target
-cargo test test_<algorithm>_<test_file> --release -- --ignored
+cargo test test_<algorithm>_<test_file> --release -- --ignored correctness
 
 # example
-cargo test test_negamax_pruned_l3_r1 --release -- --ignored
+cargo test test_negamax_pruned_l3_r1 --release -- --ignored correctness
+```
+
+### Metrics:
+```bash
+# all
+cargo insta test --review --release -- --ignored metrics
 ```
 
 ### Benchmarks:

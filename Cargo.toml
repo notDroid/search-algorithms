@@ -3,8 +3,9 @@ name = "search-algorithms"
 version = "0.1.0"
 edition = "2024"
 
-[dependencies]
+[dev-dependencies]
 criterion = "0.8.2"
+insta = "1.48.0"
 
 [[bench]]
 name = "connect4_negamax"

@@ -92,7 +92,7 @@ fn negamax_pruned_core<T: game::ZeroSumGame>(game: &mut T, opp_best_score: Optio
         }
     }
 
-    (best_score.expect("Terminal should have at least move"), best_game_move)
+    (best_score.expect("Non-terminal state should have at least move"), best_game_move)
 }
 
 pub fn negamax_pruned<T: game::ZeroSumGame>(game: &mut T) -> (T::Score, Option<T::Move>) {
