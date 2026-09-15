@@ -257,7 +257,7 @@ impl Connect4BitBoard {
     fn insert(&self, col: usize) -> Self {
         Self {
             size: self.size + 1,
-            pos: self.pos & self.mask,
+            pos: self.pos ^ self.mask,
             mask: self.mask | (self.mask + Self::bottom_mask(col)),
         }
     }
@@ -268,7 +268,7 @@ impl Connect4BitBoard {
         1_u64 << (col*(ROWS+1))
     }
 
-    /// Use parallel-scan like operation to check every angle in 2 operations.
+    /// Use parallel-scan like operation to check every angle in 2 operations. (Check the game finished the previous turn)
     /// 
     /// Horizontal:
     /// - Shift board 1 to the right then &
@@ -279,26 +279,28 @@ impl Connect4BitBoard {
     /// Similiarily for other directions.
     #[inline]
     fn is_connected(&self) -> bool {
+        let pos = self.pos ^ self.mask;
+
         // horizontal 
-        let m = self.pos & (self.pos >> (ROWS+1));
+        let m = pos & (pos >> (ROWS+1));
         if (m & (m >> (2*(ROWS+1)))) != 0 {
             return true;
         }
 
         // diagonal 1
-        let m = self.pos & (self.pos >> ROWS);
+        let m = pos & (pos >> ROWS);
         if m & (m >> (2*ROWS)) != 0 {
             return true;
         }
 
         // diagonal 2 
-        let m = self.pos & (self.pos >> (ROWS+2));
+        let m = pos & (pos >> (ROWS+2));
         if m & (m >> (2*(ROWS+2))) != 0 {
             return true;
         }
 
         // vertical;
-        let m = self.pos & (self.pos >> 1);
+        let m = pos & (pos >> 1);
         if m & (m >> 2) != 0 {
             return true;
         }
@@ -361,49 +363,62 @@ impl ZeroSumTree for Connect4BitBoard {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
-    #[test]
-    fn test_horizontal_win() {
-        // Red plays col 1, Yellow plays 1, Red 2, Yellow 2, Red 3, Yellow 3, Red 4 -> Win!
-        let game = Connect4Basic::from_sequence("1122334").unwrap();
-        let score = game.terminal_score();
-        
-        assert!(score.is_some(), "Game should be terminal");
-        assert!(score.unwrap() < 0, "Score should be negative from perspective of the losing player");
+    macro_rules! generate_tests {
+        ($GameType:ty) => {
+            #[test]
+            fn test_horizontal_win() {
+                // Red plays col 1, Yellow plays 1, Red 2, Yellow 2, Red 3, Yellow 3, Red 4 -> Win!
+                let game = <$GameType>::from_sequence("1122334").unwrap();
+                let score = game.terminal_score();
+                
+                assert!(score.is_some(), "Game should be terminal");
+                assert!(score.unwrap() < 0, "Score should be negative from perspective of the losing player");
+            }
+
+            #[test]
+            fn test_vertical_win() {
+                // Red 1, Yellow 2, Red 1, Yellow 2, Red 1, Yellow 2, Red 1 -> Win!
+                let game = <$GameType>::from_sequence("1212121").unwrap();
+                let score = game.terminal_score();
+
+                assert!(score.is_some());
+                assert!(score.unwrap() < 0, "Score should be negative from perspective of the losing player");
+            }
+
+            #[test]
+            fn test_up_right_diagonal_win() {
+                // Builds a diagonal from (col 1, row 0) to (col 4, row 3) for Red
+                // Sequence: 1, 2, 2, 3, 3, 4, 3, 4, 4, 1, 4
+                let game = <$GameType>::from_sequence("12233434414").unwrap();
+                let score = game.terminal_score();
+
+                assert!(score.is_some());
+                assert!(score.unwrap() < 0, "Score should be negative from perspective of the losing player");
+            }
+            
+            #[test]
+            fn test_draw() {
+                // A full board sequence that ends in a draw
+                // (Just filling it up without connecting 4)
+                let seq = "473441442553113552155666136174332676222777";
+                let game = <$GameType>::from_sequence(seq).unwrap();
+                let score = game.terminal_score();
+
+                assert!(score.is_some());
+                assert!(score.unwrap() == 0, "Score should be 0 when the game is a draw");
+            }
+        };
     }
 
-    #[test]
-    fn test_vertical_win() {
-        // Red 1, Yellow 2, Red 1, Yellow 2, Red 1, Yellow 2, Red 1 -> Win!
-        let game = Connect4Basic::from_sequence("1212121").unwrap();
-        let score = game.terminal_score();
-
-        assert!(score.is_some());
-        assert!(score.unwrap() < 0, "Score should be negative from perspective of the losing player");
+    mod basic {
+        use super::super::*;
+        generate_tests!(Connect4Basic);
     }
 
-    #[test]
-    fn test_up_right_diagonal_win() {
-        // Builds a diagonal from (col 1, row 0) to (col 4, row 3) for Red
-        // Sequence: 1, 2, 2, 3, 3, 4, 3, 4, 4, 1, 4
-        let game = Connect4Basic::from_sequence("12233434414").unwrap();
-        let score = game.terminal_score();
-
-        assert!(score.is_some());
-        assert!(score.unwrap() < 0, "Score should be negative from perspective of the losing player");
-    }
-    
-    #[test]
-    fn test_draw() {
-        // A full board sequence that ends in a draw
-        // (Just filling it up without connecting 4)
-        let seq = "473441442553113552155666136174332676222777";
-        let game = Connect4Basic::from_sequence(seq).unwrap();
-        let score = game.terminal_score();
-
-        assert!(score.is_some());
-        assert!(score.unwrap() == 0, "Score should be 0 when the game is a draw");
+    mod bitboard {
+        use super::super::*;
+        generate_tests!(Connect4BitBoard);
     }
 }
 
