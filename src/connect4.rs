@@ -1,4 +1,5 @@
-use crate::searchtree::SearchTree;
+use crate::searchtree::{SearchTree, ZeroSumTree};
+use std::ops::ControlFlow;
 
 const ROWS: usize = 6;
 const COLUMNS: usize = 7;
@@ -160,7 +161,7 @@ impl Connect4Basic {
         self.turn = self.turn.switch();
     }
 
-    fn terminal_score(&self) -> Option<Self::Score> {
+    fn terminal_score(&self) -> Option<i32> {
         let (row, col, player) = *self.moves.last()?;
         if self.board.is_connected(row, col, player) {
             Some((self.board.size().div_ceil(2) as i32) + MIN_SCORE)
@@ -176,9 +177,35 @@ impl Connect4Basic {
     }
 }
 
-// impl SearchTree for Connect4Basic {
+impl SearchTree for Connect4Basic {
+    type Move = Column;
+    type Score = i32;
 
-// }
+    fn evaluate<F>(&mut self, mut on_ongoing: F) -> Option<Self::Score>
+    where
+        F: FnMut(Self::Move, &mut Self) -> ControlFlow<()>
+    {
+        if let Some(score) = self.terminal_score() {
+            return Some(score);
+        }
+
+        for col in self.get_moves() {
+            self.make_move(col);
+            let control = on_ongoing(col, self);
+            self.undo_move(col);
+
+            if control.is_break() {
+                return None;
+            }
+        }
+
+        None
+    }
+}
+
+impl ZeroSumTree for Connect4Basic {
+    type ZScore = i32;
+}
 
 // pub struct Connect4BitBoard {
 //     size: usize,
