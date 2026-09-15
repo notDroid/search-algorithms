@@ -1,16 +1,16 @@
 use criterion::{criterion_group, criterion_main, BatchSize, Criterion};
 use std::hint::black_box;
 use std::fs;
-use search_algorithms::connect4::Connect4;
+use search_algorithms::connect4::Connect4Basic;
 use search_algorithms::minimax::{negamax, negamax_pruned, negamax_half_pruned};
 
 pub fn criterion_benchmark(c: &mut Criterion) {
     let contents = fs::read_to_string("tests/Test_L3_R1").expect("Failed to read file");
 
-    let games: Vec<Connect4> = contents
+    let games: Vec<Connect4Basic> = contents
         .lines()
         .map(|line| line.split_whitespace().next().expect("Expected sequence"))
-        .map(|seq| Connect4::from_sequence(seq).expect("Expected to be able to parse test sequence into game object"))
+        .map(|seq| Connect4Basic::from_sequence(seq).expect("Expected to be able to parse test sequence into game object"))
         .collect();
 
     let mut group = c.benchmark_group("connect4_benchmarks");
@@ -21,7 +21,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
             || games.clone(),
             |mut cloned_games| {
                 for g in cloned_games.iter_mut() {
-                    negamax(black_box(g));
+                    negamax(black_box(g), black_box(&mut |_| {}));
                 }
             },
             BatchSize::SmallInput,
@@ -33,7 +33,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
             || games.clone(),
             |mut cloned_games| {
                 for g in cloned_games.iter_mut() {
-                    negamax_half_pruned(black_box(g));
+                    negamax_half_pruned(black_box(g), black_box(&mut |_| {}));
                 }
             },
             BatchSize::SmallInput,
@@ -45,7 +45,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
             || games.clone(),
             |mut cloned_games| {
                 for g in cloned_games.iter_mut() {
-                    negamax_pruned(black_box(g));
+                    negamax_pruned(black_box(g), black_box(&mut |_| {}));
                 }
             },
             BatchSize::SmallInput,
