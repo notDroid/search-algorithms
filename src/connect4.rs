@@ -118,7 +118,7 @@ pub struct Connect4Basic {
 
 fn seq_iterator<'a>(
     seq: &'a str,
-) -> impl Iterator<Item = Result<usize, &'static str>> + 'a {
+) -> impl Iterator<Item = Result<Column, &'static str>> + 'a {
     seq.chars().map(|ch| {
         ch.to_digit(10)
             .ok_or("Invalid character")?
@@ -126,6 +126,7 @@ fn seq_iterator<'a>(
             .ok_or("Column out of bounds")?
             .try_into()
             .map_err(|_| "Column out of bounds")
+            .and_then(|col| Column::try_from(col))
     })
 }
 
@@ -133,9 +134,7 @@ impl Connect4Basic {
     pub fn from_sequence(seq: &str) -> Result<Self, &'static str> {
         let mut game = Self::new();
         for col in seq_iterator(seq) {
-            let col = Column::try_from(col?)?;
-
-            game.make_move(col);
+            game.make_move(col?);
         }
         Ok(game)
     }
@@ -207,17 +206,158 @@ impl ZeroSumTree for Connect4Basic {
     type ZScore = i32;
 }
 
-// pub struct Connect4BitBoard {
-//     size: usize,
-//     pos: u64,
-//     mask: u64,
-// }
+/// Bit board implementation of connect 4 board
+#[derive(Default, Clone, Copy)]
+pub struct Connect4BitBoard {
+    /// Number of turns played
+    size: usize,
 
-// impl Connect4BitBoard {
-//     fn make_move(self) -> Self {
+    /// Binary represenations of the boards as follows:
+    /// 
+    /// (ROWS+1) x COLUMNS 
+    /// 
+    /// ```ascii
+    /// .  .  .  .  .  .  .
+    /// 5 12 19 26 33 40 47
+    /// 4 11 18 25 32 39 46
+    /// 3 10 17 24 31 38 45
+    /// 2  9 16 23 30 37 44
+    /// 1  8 15 22 29 36 43
+    /// 0  7 14 21 28 35 42 
+    /// ```
+    /// 
+    /// Top row unused.
+    /// 
+    /// pos and mask together determine the board.
+    /// 
+    /// pos uses 1 for current player 0 for opposite.
+    pos: u64,
+    /// 1 for every played square
+    mask: u64,
+}
 
-//     }
-// }
+impl Connect4BitBoard {
+    pub fn from_sequence(seq: &str) -> Result<Self, &'static str> {
+        let mut game = Self::default();
+        for col in seq_iterator(seq) {
+            game = game.insert(col?.index())
+        }
+        Ok(game)
+    }
+
+    /// For pos: 
+    /// - Flip every previously played 1->0 and 0->1. 
+    ///     - This can be done using pos^mask: 0^0=0, x^1=~x.
+    /// - Next played move will be 0 anyways, just need to update mask.
+    /// 
+    /// For mask:
+    /// - mask + bottom_mask -> cascades that column so that 1 is the next row, rest undisturbed.
+    /// - OR that to get new mask.
+    #[inline]
+    fn insert(&self, col: usize) -> Self {
+        Self {
+            size: self.size + 1,
+            pos: self.pos & self.mask,
+            mask: self.mask | (self.mask + Self::bottom_mask(col)),
+        }
+    }
+
+    /// move a 1 to the bottom of the corresponding column
+    #[inline]
+    fn bottom_mask(col: usize) -> u64 {
+        1_u64 << (col*(ROWS+1))
+    }
+
+    /// Use parallel-scan like operation to check every angle in 2 operations.
+    /// 
+    /// Horizontal:
+    /// - Shift board 1 to the right then &
+    /// - this creates a grid where every tile (excluding the first column) represents whether there is 2 in a row (going leftwards).
+    /// - this again but shift twice to the right, then each tile (excluding the first 3 column) represents whether there is a 4 in a row (going leftwards).
+    /// - if any tile is non-zero the overall u64 is non-zero and there is a connect4
+    /// 
+    /// Similiarily for other directions.
+    #[inline]
+    fn is_connected(&self) -> bool {
+        // horizontal 
+        let m = self.pos & (self.pos >> (ROWS+1));
+        if (m & (m >> (2*(ROWS+1)))) != 0 {
+            return true;
+        }
+
+        // diagonal 1
+        let m = self.pos & (self.pos >> ROWS);
+        if m & (m >> (2*ROWS)) != 0 {
+            return true;
+        }
+
+        // diagonal 2 
+        let m = self.pos & (self.pos >> (ROWS+2));
+        if m & (m >> (2*(ROWS+2))) != 0 {
+            return true;
+        }
+
+        // vertical;
+        let m = self.pos & (self.pos >> 1);
+        if m & (m >> 2) != 0 {
+            return true;
+        }
+
+        return false;
+    }
+
+    #[inline]
+    fn terminal_score(&self) -> Option<i32> {
+        if self.is_connected() {
+            Some((self.size.div_ceil(2) as i32) + MIN_SCORE)
+        } else if self.size == ROWS*COLUMNS {
+            Some(0)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    fn top_mask(col: usize) -> u64 {
+        (1 << (COLUMNS-1)) << (col*(ROWS+1))
+    }
+
+    #[inline]
+    fn column_open(&self, col: usize) -> bool {
+        self.mask & Self::top_mask(col) != 0
+    }
+}
+
+impl SearchTree for Connect4BitBoard {
+    type Move = usize;
+    type Score = i32;
+
+    fn evaluate<F>(&mut self, mut on_ongoing: F) -> Option<Self::Score>
+    where
+        F: FnMut(Self::Move, &mut Self) -> ControlFlow<()> {
+        if let Some(score) = self.terminal_score() {
+            return Some(score);
+        }
+
+        for col in 0..COLUMNS {
+            if !self.column_open(col) {
+                continue;
+            }
+
+            let control = on_ongoing(col, &mut self.insert(col));
+
+            if control.is_break() {
+                return None;
+            }
+        }
+
+        None
+    }
+}
+
+impl ZeroSumTree for Connect4BitBoard {
+    type ZScore = i32;
+}
 
 #[cfg(test)]
 mod tests {
