@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 use std::fs;
 use search_algorithms::connect4::Connect4;
-use search_algorithms::game::{ReversibleGame, ZeroSumGame};
+use search_algorithms::searchtree::{ReversibleGame, ZeroSumGame};
 
 // METRICS WRAPPER
 pub struct InstrumentedGame<G> {

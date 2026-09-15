@@ -1,3 +1,3 @@
 pub mod connect4;
-pub mod game;
+pub mod searchtree;
 pub mod minimax;

@@ -1,108 +1,111 @@
-use crate::game;
+use crate::searchtree::ZeroSumTree;
+use std::ops::ControlFlow;
 
-pub fn negamax<T: game::ZeroSumGame>(game: &mut T) -> (T::Score, Option<T::Move>) {
-    if let Some(score) = game.terminal_score() {
-        return (score, None);
-    }
-
+pub fn negamax<T: ZeroSumTree>(st: &mut T) -> (T::Score, Option<T::Move>) {
     let mut best_score = None;
     let mut best_game_move  = None;
-
-    for game_move in game.get_moves() {
-        game.make_move(&game_move);
-        let (score, _) = negamax(game);
+    
+    let terminal_score = st.evaluate(|game_move, ct| {
+        let (score, _) = negamax(ct);
         let score = -score;
-        game.undo_move(&game_move);
 
         if best_score.is_none_or(|best_score| best_score < score) {
             best_score = Some(score);
             best_game_move = Some(game_move);
         }
-    }
 
-    (best_score.expect("Terminal should have at least move"), best_game_move)
+        ControlFlow::Continue(())
+    });
+    
+    match terminal_score {
+        Some(score) => (score, None),
+        None => (best_score.expect("Non terminal state should have at least move"), best_game_move)
+    }
 }
 
-fn negamax_half_pruned_core<T: game::ZeroSumGame>(game: &mut T, opp_best_score: Option<T::Score>) -> (T::Score, Option<T::Move>) {
-    if let Some(score) = game.terminal_score() {
-        return (score, None);
-    }
+fn negamax_half_pruned_core<T: ZeroSumTree>(st: &mut T, opp_best_score: Option<T::Score>) -> (T::Score, Option<T::Move>) {
 
     let mut best_score = None;
     let mut best_game_move  = None;
 
-    for game_move in game.get_moves() {
-        game.make_move(&game_move);
-        let (opp_score, _) = negamax_half_pruned_core(game, best_score);
-        game.undo_move(&game_move);
+    let terminal_score = st.evaluate(|game_move, ct| {
+        let (opp_score, _) = negamax_half_pruned_core(ct, best_score);
 
         let score = -opp_score;
-
-        if let Some(a) = opp_best_score
-            && opp_score <= a // SKIP EVEN IF EQUAL
-        {
-            return (score, None);
-        }
 
         // DON'T TAKE EQUAL SCORES
         if best_score.is_none_or(|best_score| best_score < score) {
             best_score = Some(score);
             best_game_move = Some(game_move);
         }
-    }
 
-    (best_score.expect("Terminal should have at least move"), best_game_move)
+        if let Some(a) = opp_best_score
+            && opp_score <= a // SKIP EVEN IF EQUAL
+        {
+            best_game_move = None;
+            return ControlFlow::Break(());
+        }
+
+        ControlFlow::Continue(())
+    });
+
+    match terminal_score {
+        Some(score) => (score, None),
+        None => (best_score.expect("Non terminal state should have at least move"), best_game_move)
+    }
 }
 
-pub fn negamax_half_pruned<T: game::ZeroSumGame>(game: &mut T) -> (T::Score, Option<T::Move>) {
-    negamax_half_pruned_core(game, None)
+pub fn negamax_half_pruned<T: ZeroSumTree>(st: &mut T) -> (T::Score, Option<T::Move>) {
+    negamax_half_pruned_core(st, None)
 }
 
-fn negamax_pruned_core<T: game::ZeroSumGame>(game: &mut T, opp_best_score: Option<T::Score>, mut prev_best_score: Option<T::Score>) -> (T::Score, Option<T::Move>) {
-    if let Some(score) = game.terminal_score() {
-        return (score, None);
-    }
+fn negamax_pruned_core<T: ZeroSumTree>(st: &mut T, opp_best_score: Option<T::Score>, mut prev_best_score: Option<T::Score>) -> (T::Score, Option<T::Move>) {
 
     let mut best_score = None;
     let mut best_game_move  = None;
 
-    for game_move in game.get_moves() {
-        game.make_move(&game_move);
-        let (opp_score, _) = negamax_pruned_core(game, prev_best_score, opp_best_score);
-        game.undo_move(&game_move);
+    let terminal_score = st.evaluate(|game_move, ct| {
+        let (opp_score, _) = negamax_pruned_core(ct, prev_best_score, opp_best_score);
 
         let score = -opp_score;
-        
-        // Prune?
-        if let Some(a) = opp_best_score
-            && opp_score <= a // (p) PRUNE WHEN EQUAL
-        {
-            return (score, None);
-        }
-        
-        // New best move?
-        if best_score.is_none_or(|best_score| best_score < score) { // (p) DON'T TAKE EQUAL SCORES
+
+        // DON'T TAKE EQUAL SCORES
+        if best_score.is_none_or(|best_score| best_score < score) {
             best_score = Some(score);
             best_game_move = Some(game_move);
+        }
+
+        // Prune?
+        if let Some(a) = opp_best_score
+            && opp_score <= a // SKIP EVEN IF EQUAL
+        {
+            best_game_move = None;
+            return ControlFlow::Break(());
         }
 
         // New best for this line?
         if prev_best_score.is_none_or(|prev_best_score| prev_best_score < score) {
             prev_best_score = Some(score);
         }
+
+        ControlFlow::Continue(())
+    });
+
+    match terminal_score {
+        Some(score) => (score, None),
+        None => (best_score.expect("Non terminal state should have at least move"), best_game_move)
     }
-
-    (best_score.expect("Non-terminal state should have at least move"), best_game_move)
 }
 
-pub fn negamax_pruned<T: game::ZeroSumGame>(game: &mut T) -> (T::Score, Option<T::Move>) {
-    negamax_pruned_core(game, None, None)
+pub fn negamax_pruned<T: ZeroSumTree>(st: &mut T) -> (T::Score, Option<T::Move>) {
+    negamax_pruned_core(st, None, None)
 }
+
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::game::{ReversibleGame, ZeroSumGame};
+    use crate::searchtree::ZeroSumTree;
 
     #[derive(Clone, Copy, PartialEq, Debug)]
     enum MockMove {
@@ -126,7 +129,7 @@ mod tests {
         history: Vec<usize>,
     }
 
-    impl ReversibleGame for MockGame {
+    impl ZeroSumTree for MockGame {
         type Move = MockMove;
 
         fn get_moves(&self) -> Vec<Self::Move> {

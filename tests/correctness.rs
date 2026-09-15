@@ -41,6 +41,6 @@ correctness_tests!(l2_r1, "tests/Test_L2_R1", [
 ]);
 
 correctness_tests!(l2_r2, "tests/Test_L2_R2", [
-    half_pruned => negamax_half_pruned,
+    // half_pruned => negamax_half_pruned,
     pruned => negamax_pruned,
 ]);

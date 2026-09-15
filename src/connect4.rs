@@ -1,4 +1,4 @@
-use crate::game::{ReversibleGame, ZeroSumGame};
+use crate::searchtree::SearchTree;
 
 const ROWS: usize = 6;
 const COLUMNS: usize = 7;
@@ -109,24 +109,30 @@ impl Board {
 }
 
 #[derive(Default, Clone, Debug)]
-pub struct Connect4 {
+pub struct Connect4Basic {
     board: Board,
     turn: Player,
     moves: Vec<(usize, usize, Player)>,
 }
 
-impl Connect4 {
+fn seq_iterator<'a>(
+    seq: &'a str,
+) -> impl Iterator<Item = Result<usize, &'static str>> + 'a {
+    seq.chars().map(|ch| {
+        ch.to_digit(10)
+            .ok_or("Invalid character")?
+            .checked_sub(1)
+            .ok_or("Column out of bounds")?
+            .try_into()
+            .map_err(|_| "Column out of bounds")
+    })
+}
+
+impl Connect4Basic {
     pub fn from_sequence(seq: &str) -> Result<Self, &'static str> {
         let mut game = Self::new();
-        for ch in seq.chars() {
-            let col: usize = ch
-                .to_digit(10)
-                .ok_or("Invalid character")?
-                .checked_sub(1)
-                .ok_or("Column out of bounds")?
-                .try_into()
-                .map_err(|_| "Column out of bounds")?;
-            let col = Column::try_from(col)?;
+        for col in seq_iterator(seq) {
+            let col = Column::try_from(col?)?;
 
             game.make_move(col);
         }
@@ -148,31 +154,11 @@ impl Connect4 {
         self.turn = self.turn.switch();
     }
 
-    pub fn new() -> Self {
-        Connect4::default()
-    }
-}
-
-impl ReversibleGame for Connect4 {
-    type Move = Column;
-
-    fn get_moves(&self) -> Vec<Self::Move> {
-        self.get_moves()
-    }
-
-    fn make_move(&mut self, game_move: &Self::Move) {
-        self.make_move(*game_move);
-    }
-
-    fn undo_move(&mut self, game_move: &Self::Move) {
-        self.board.pop(*game_move);
+    fn undo_move(&mut self, col: Column) {
+        self.board.pop(col);
         self.moves.pop();
         self.turn = self.turn.switch();
     }
-}
-
-impl ZeroSumGame for Connect4 {
-    type Score = i32;
 
     fn terminal_score(&self) -> Option<Self::Score> {
         let (row, col, player) = *self.moves.last()?;
@@ -184,7 +170,27 @@ impl ZeroSumGame for Connect4 {
             None
         }
     }
+
+    pub fn new() -> Self {
+        Self::default()
+    }
 }
+
+// impl SearchTree for Connect4Basic {
+
+// }
+
+// pub struct Connect4BitBoard {
+//     size: usize,
+//     pos: u64,
+//     mask: u64,
+// }
+
+// impl Connect4BitBoard {
+//     fn make_move(self) -> Self {
+
+//     }
+// }
 
 #[cfg(test)]
 mod tests {
@@ -193,7 +199,7 @@ mod tests {
     #[test]
     fn test_horizontal_win() {
         // Red plays col 1, Yellow plays 1, Red 2, Yellow 2, Red 3, Yellow 3, Red 4 -> Win!
-        let game = Connect4::from_sequence("1122334").unwrap();
+        let game = Connect4Basic::from_sequence("1122334").unwrap();
         let score = game.terminal_score();
         
         assert!(score.is_some(), "Game should be terminal");
@@ -203,7 +209,7 @@ mod tests {
     #[test]
     fn test_vertical_win() {
         // Red 1, Yellow 2, Red 1, Yellow 2, Red 1, Yellow 2, Red 1 -> Win!
-        let game = Connect4::from_sequence("1212121").unwrap();
+        let game = Connect4Basic::from_sequence("1212121").unwrap();
         let score = game.terminal_score();
 
         assert!(score.is_some());
@@ -214,7 +220,7 @@ mod tests {
     fn test_up_right_diagonal_win() {
         // Builds a diagonal from (col 1, row 0) to (col 4, row 3) for Red
         // Sequence: 1, 2, 2, 3, 3, 4, 3, 4, 4, 1, 4
-        let game = Connect4::from_sequence("12233434414").unwrap();
+        let game = Connect4Basic::from_sequence("12233434414").unwrap();
         let score = game.terminal_score();
 
         assert!(score.is_some());
@@ -226,7 +232,7 @@ mod tests {
         // A full board sequence that ends in a draw
         // (Just filling it up without connecting 4)
         let seq = "473441442553113552155666136174332676222777";
-        let game = Connect4::from_sequence(seq).unwrap();
+        let game = Connect4Basic::from_sequence(seq).unwrap();
         let score = game.terminal_score();
 
         assert!(score.is_some());
