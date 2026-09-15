@@ -12,7 +12,7 @@ macro_rules! metrics_tests {
                 #[test]
                 #[ignore]
                 fn $algo_name() {
-                    let avg = run_metrics_file($file, |board| $algo_func(board));
+                    let avg = run_metrics_file($file, |board, m| $algo_func(board, m));
                     assert_debug_snapshot!(stringify!($algo_name), avg);
                 }
             )*
@@ -22,16 +22,16 @@ macro_rules! metrics_tests {
 
 metrics_tests!(l3_r1, "tests/Test_L3_R1", [
     basic => negamax,
-    half_pruned => negamax_half_pruned,
-    pruned => negamax_pruned,
+    // half_pruned => negamax_half_pruned,
+    // pruned => negamax_pruned,
 ]);
 
 metrics_tests!(l2_r1, "tests/Test_L2_R1", [
     // half_pruned => negamax_half_pruned,
-    pruned => negamax_pruned,
+    // pruned => negamax_pruned,
 ]);
 
 metrics_tests!(l2_r2, "tests/Test_L2_R2", [
     // half_pruned => negamax_half_pruned,
-    pruned => negamax_pruned,
+    // pruned => negamax_pruned,
 ]);

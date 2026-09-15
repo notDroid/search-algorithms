@@ -1,12 +1,18 @@
 use crate::searchtree::ZeroSumTree;
 use std::ops::ControlFlow;
 
-pub fn negamax<T: ZeroSumTree>(st: &mut T) -> (T::Score, Option<T::Move>) {
+pub enum MetricEvent {
+    NodeVisited,
+    PruningTriggered,
+}
+
+pub fn negamax<T: ZeroSumTree, M: FnMut(MetricEvent)+?Sized>(st: &mut T, m: &mut M) -> (T::Score, Option<T::Move>) {
+    m(MetricEvent::NodeVisited);
     let mut best_score = None;
     let mut best_game_move  = None;
     
     let terminal_score = st.evaluate(|game_move, ct| {
-        let (score, _) = negamax(ct);
+        let (score, _) = negamax(ct, m);
         let score = -score;
 
         if best_score.is_none_or(|best_score| best_score < score) {
