@@ -6,10 +6,10 @@ cargo test
 ### File Tests:
 ```bash
 # all
-cargo test --release -- --ignored correctness --test-threads=<N>
+cargo test --release --test correctness -- --ignored --test-threads=<N>
 
 # target
-cargo test --release --correctness -- --ignored <test_file>::<algorithm>
+cargo test --release --test correctness -- --ignored <test_file>::<algorithm>
 
 # example
 cargo test --release --test correctness -- --ignored l3_r1

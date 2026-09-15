@@ -6,7 +6,7 @@ pub enum MetricEvent {
     PruningTriggered,
 }
 
-pub fn negamax<T: ZeroSumTree, M: FnMut(MetricEvent)+?Sized>(st: &mut T, m: &mut M) -> (T::Score, Option<T::Move>) {
+pub fn negamax<T: ZeroSumTree, M: FnMut(MetricEvent)>(st: &mut T, m: &mut M) -> (T::Score, Option<T::Move>) {
     m(MetricEvent::NodeVisited);
     let mut best_score = None;
     let mut best_game_move  = None;
@@ -29,13 +29,14 @@ pub fn negamax<T: ZeroSumTree, M: FnMut(MetricEvent)+?Sized>(st: &mut T, m: &mut
     }
 }
 
-fn negamax_half_pruned_core<T: ZeroSumTree>(st: &mut T, opp_best_score: Option<T::Score>) -> (T::Score, Option<T::Move>) {
+fn negamax_half_pruned_core<T: ZeroSumTree, M: FnMut(MetricEvent)>(st: &mut T, opp_best_score: Option<T::Score>, m: &mut M) -> (T::Score, Option<T::Move>) {
+    m(MetricEvent::NodeVisited);
 
     let mut best_score = None;
     let mut best_game_move  = None;
 
     let terminal_score = st.evaluate(|game_move, ct| {
-        let (opp_score, _) = negamax_half_pruned_core(ct, best_score);
+        let (opp_score, _) = negamax_half_pruned_core(ct, best_score, m);
 
         let score = -opp_score;
 
@@ -48,6 +49,7 @@ fn negamax_half_pruned_core<T: ZeroSumTree>(st: &mut T, opp_best_score: Option<T
         if let Some(a) = opp_best_score
             && opp_score <= a // SKIP EVEN IF EQUAL
         {
+            m(MetricEvent::PruningTriggered);
             best_game_move = None;
             return ControlFlow::Break(());
         }
@@ -61,17 +63,18 @@ fn negamax_half_pruned_core<T: ZeroSumTree>(st: &mut T, opp_best_score: Option<T
     }
 }
 
-pub fn negamax_half_pruned<T: ZeroSumTree>(st: &mut T) -> (T::Score, Option<T::Move>) {
-    negamax_half_pruned_core(st, None)
+pub fn negamax_half_pruned<T: ZeroSumTree, M: FnMut(MetricEvent)>(st: &mut T, m: &mut M) -> (T::Score, Option<T::Move>) {
+    negamax_half_pruned_core(st, None, m)
 }
 
-fn negamax_pruned_core<T: ZeroSumTree>(st: &mut T, opp_best_score: Option<T::Score>, mut prev_best_score: Option<T::Score>) -> (T::Score, Option<T::Move>) {
+fn negamax_pruned_core<T: ZeroSumTree, M: FnMut(MetricEvent)>(st: &mut T, opp_best_score: Option<T::Score>, mut prev_best_score: Option<T::Score>, m: &mut M) -> (T::Score, Option<T::Move>) {
+    m(MetricEvent::NodeVisited);
 
     let mut best_score = None;
     let mut best_game_move  = None;
 
     let terminal_score = st.evaluate(|game_move, ct| {
-        let (opp_score, _) = negamax_pruned_core(ct, prev_best_score, opp_best_score);
+        let (opp_score, _) = negamax_pruned_core(ct, prev_best_score, opp_best_score, m);
 
         let score = -opp_score;
 
@@ -85,6 +88,7 @@ fn negamax_pruned_core<T: ZeroSumTree>(st: &mut T, opp_best_score: Option<T::Sco
         if let Some(a) = opp_best_score
             && opp_score <= a // SKIP EVEN IF EQUAL
         {
+            m(MetricEvent::PruningTriggered);
             best_game_move = None;
             return ControlFlow::Break(());
         }
@@ -103,8 +107,8 @@ fn negamax_pruned_core<T: ZeroSumTree>(st: &mut T, opp_best_score: Option<T::Sco
     }
 }
 
-pub fn negamax_pruned<T: ZeroSumTree>(st: &mut T) -> (T::Score, Option<T::Move>) {
-    negamax_pruned_core(st, None, None)
+pub fn negamax_pruned<T: ZeroSumTree, M: FnMut(MetricEvent)>(st: &mut T, m: &mut M) -> (T::Score, Option<T::Move>) {
+    negamax_pruned_core(st, None, None, m)
 }
 
 

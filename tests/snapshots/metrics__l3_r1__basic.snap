@@ -1,6 +1,5 @@
 ---
 source: tests/metrics.rs
-assertion_line: 23
 expression: avg
 ---
-6665.554
+204044.053
