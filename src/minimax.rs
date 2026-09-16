@@ -25,7 +25,7 @@ pub fn negamax<T: ZeroSumTree, M: FnMut(MetricEvent)>(st: &mut T, m: &mut M) -> 
     
     match terminal_score {
         Some(score) => (score, None),
-        None => (best_score.expect("Non terminal state should have at least move"), best_game_move)
+        None => (best_score.expect("Non terminal state should have at least one move"), best_game_move)
     }
 }
 
@@ -59,7 +59,7 @@ fn negamax_half_pruned_core<T: ZeroSumTree, M: FnMut(MetricEvent)>(st: &mut T, o
 
     match terminal_score {
         Some(score) => (score, None),
-        None => (best_score.expect("Non terminal state should have at least move"), best_game_move)
+        None => (best_score.expect("Non terminal state should have at least one move"), best_game_move)
     }
 }
 
@@ -103,7 +103,7 @@ fn negamax_pruned_core<T: ZeroSumTree, M: FnMut(MetricEvent)>(st: &mut T, opp_be
 
     match terminal_score {
         Some(score) => (score, None),
-        None => (best_score.expect("Non terminal state should have at least move"), best_game_move)
+        None => (best_score.expect("Non terminal state should have at least one move"), best_game_move)
     }
 }
 

@@ -2,7 +2,7 @@ mod common;
 
 use search_algorithms::minimax::*;
 use common::test_file_iterator;
-use search_algorithms::connect4::Connect4Basic;
+use search_algorithms::connect4::{Connect4Basic, Connect4BitBoard};
 
 macro_rules! correctness_tests {
     ($mod_name:ident, $file:expr, [$($algo_name:ident => $algo_func:expr),* $(,)?]) => {
@@ -28,11 +28,22 @@ macro_rules! correctness_tests {
 }
 
 #[test]
-fn connect4_simple() {
+fn connect4_simple_basic() {
     let seq = "2252576253462244111563365343671351441";
     let expected_score: i32 = -1;
 
-    let mut board = search_algorithms::connect4::Connect4Basic::from_sequence(seq).expect("valid sequence");
+    let mut board = Connect4Basic::from_sequence(seq).expect("valid sequence");
+    let (score, _best_move) = negamax(&mut board, &mut |_| {});
+
+    assert_eq!(score, expected_score);
+}
+
+#[test]
+fn connect4_simple_bitboard() {
+    let seq = "2252576253462244111563365343671351441";
+    let expected_score: i32 = -1;
+
+    let mut board = Connect4BitBoard::from_sequence(seq).expect("valid sequence");
     let (score, _best_move) = negamax(&mut board, &mut |_| {});
 
     assert_eq!(score, expected_score);

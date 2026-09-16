@@ -139,7 +139,7 @@ impl Connect4Basic {
         Ok(game)
     }
 
-    fn get_moves(&self) -> Vec<Column> {
+    pub fn get_moves(&self) -> Vec<Column> {
         self.board.column_lengths()
             .iter()
             .enumerate()
@@ -148,19 +148,19 @@ impl Connect4Basic {
             .collect()
     }
 
-    fn make_move(&mut self, col: Column) {
+    pub fn make_move(&mut self, col: Column) {
         let row = self.board.insert(col, self.turn);
         self.moves.push((row, col.index(), self.turn));
         self.turn = self.turn.switch();
     }
 
-    fn undo_move(&mut self, col: Column) {
+    pub fn undo_move(&mut self, col: Column) {
         self.board.pop(col);
         self.moves.pop();
         self.turn = self.turn.switch();
     }
 
-    fn terminal_score(&self) -> Option<i32> {
+    pub fn terminal_score(&self) -> Option<i32> {
         let (row, col, player) = *self.moves.last()?;
         if self.board.is_connected(row, col, player) {
             Some((self.board.size().div_ceil(2) as i32) + MIN_SCORE)
@@ -254,7 +254,7 @@ impl Connect4BitBoard {
     /// - mask + bottom_mask -> cascades that column so that 1 is the next row, rest undisturbed.
     /// - OR that to get new mask.
     #[inline]
-    fn insert(&self, col: usize) -> Self {
+    pub fn insert(&self, col: usize) -> Self {
         Self {
             size: self.size + 1,
             pos: self.pos ^ self.mask,
@@ -281,35 +281,25 @@ impl Connect4BitBoard {
     fn is_connected(&self) -> bool {
         let pos = self.pos ^ self.mask;
 
-        // horizontal 
-        let m = pos & (pos >> (ROWS+1));
-        if (m & (m >> (2*(ROWS+1)))) != 0 {
-            return true;
-        }
+        const SHIFTS: [usize; 4] = [
+            // Horizontal
+            ROWS + 1, 
+            // Diagonal 1
+            ROWS, 
+            // Diagonal 2
+            ROWS + 2, 
+            // Vertical
+            1,
+        ];
 
-        // diagonal 1
-        let m = pos & (pos >> ROWS);
-        if m & (m >> (2*ROWS)) != 0 {
-            return true;
-        }
-
-        // diagonal 2 
-        let m = pos & (pos >> (ROWS+2));
-        if m & (m >> (2*(ROWS+2))) != 0 {
-            return true;
-        }
-
-        // vertical;
-        let m = pos & (pos >> 1);
-        if m & (m >> 2) != 0 {
-            return true;
-        }
-
-        return false;
+        SHIFTS.into_iter().any(|shift| {
+            let m = pos & (pos >> shift);
+            (m & (m >> (2 * shift))) != 0
+        })
     }
 
     #[inline]
-    fn terminal_score(&self) -> Option<i32> {
+    pub fn terminal_score(&self) -> Option<i32> {
         if self.is_connected() {
             Some((self.size.div_ceil(2) as i32) + MIN_SCORE)
         } else if self.size == ROWS*COLUMNS {
@@ -321,12 +311,22 @@ impl Connect4BitBoard {
 
     #[inline]
     fn top_mask(col: usize) -> u64 {
-        (1 << (COLUMNS-1)) << (col*(ROWS+1))
+        (1_u64 << (ROWS-1)) << (col*(ROWS+1))
     }
 
     #[inline]
     fn column_open(&self, col: usize) -> bool {
-        self.mask & Self::top_mask(col) != 0
+        self.mask & Self::top_mask(col) == 0
+    }
+
+    #[inline]
+    pub fn open_columns(&self) -> impl Iterator<Item = usize> {
+        (0..COLUMNS).filter(|col| self.column_open(*col))
+    }
+
+    #[inline]
+    pub fn new() -> Self {
+        Self::default()
     }
 }
 
@@ -341,11 +341,7 @@ impl SearchTree for Connect4BitBoard {
             return Some(score);
         }
 
-        for col in 0..COLUMNS {
-            if !self.column_open(col) {
-                continue;
-            }
-
+        for col in self.open_columns() {
             let control = on_ongoing(col, &mut self.insert(col));
 
             if control.is_break() {
@@ -400,7 +396,6 @@ mod tests {
             #[test]
             fn test_draw() {
                 // A full board sequence that ends in a draw
-                // (Just filling it up without connecting 4)
                 let seq = "473441442553113552155666136174332676222777";
                 let game = <$GameType>::from_sequence(seq).unwrap();
                 let score = game.terminal_score();
