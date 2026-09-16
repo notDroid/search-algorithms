@@ -5,7 +5,7 @@ use common::test_file_iterator;
 use search_algorithms::connect4::{Connect4Basic, Connect4BitBoard};
 
 macro_rules! correctness_tests {
-    ($mod_name:ident, $file:expr, [$($algo_name:ident => $algo_func:expr),* $(,)?]) => {
+    ($mod_name:ident, $file:expr, $board:ty, [$($algo_name:ident => $algo_func:expr),* $(,)?]) => {
         mod $mod_name {
             #[allow(unused_imports)]
             use super::*;
@@ -15,7 +15,7 @@ macro_rules! correctness_tests {
                 #[ignore]
                 fn $algo_name() {
                     for (line_num, (seq, expected)) in test_file_iterator($file).into_iter().enumerate() {
-                        let mut board = Connect4Basic::from_sequence(&seq).unwrap();
+                        let mut board = <$board>::from_sequence(&seq).unwrap();
 
                         let (score, _) = $algo_func(&mut board, &mut |_| {});
 
@@ -49,18 +49,24 @@ fn connect4_simple_bitboard() {
     assert_eq!(score, expected_score);
 }
 
-correctness_tests!(l3_r1, "tests/Test_L3_R1", [
+correctness_tests!(l3_r1_basic, "tests/Test_L3_R1", Connect4Basic, [
     basic => negamax,
     half_pruned => negamax_half_pruned,
     pruned => negamax_pruned,
 ]);
 
-correctness_tests!(l2_r1, "tests/Test_L2_R1", [
-    // half_pruned => negamax_half_pruned,
-    // pruned => negamax_pruned,
+correctness_tests!(l3_r1_bitboard, "tests/Test_L3_R1", Connect4BitBoard, [
+    basic => negamax,
+    half_pruned => negamax_half_pruned,
+    pruned => negamax_pruned,
 ]);
 
-correctness_tests!(l2_r2, "tests/Test_L2_R2", [
+correctness_tests!(l2_r1_bitboard, "tests/Test_L2_R1", Connect4BitBoard, [
+    // half_pruned => negamax_half_pruned,
+    pruned => negamax_pruned,
+]);
+
+correctness_tests!(l2_r2_bitboard, "tests/Test_L2_R2", Connect4BitBoard, [
     // half_pruned => negamax_half_pruned,
     // pruned => negamax_pruned,
 ]);
