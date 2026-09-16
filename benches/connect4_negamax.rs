@@ -1,58 +1,53 @@
 use criterion::{criterion_group, criterion_main, BatchSize, Criterion};
 use std::hint::black_box;
 use std::fs;
-use search_algorithms::connect4::Connect4Basic;
+use search_algorithms::connect4::{Connect4Basic, Connect4BitBoard};
 use search_algorithms::minimax::{negamax, negamax_pruned, negamax_half_pruned};
 
+macro_rules! bench_algorithms {
+    ($c:expr, $group_name:expr, $file:expr, $board:ty, [$($algo_name:ident => $algo_func:expr),* $(,)?]) => {
+        {
+            let mut group = $c.benchmark_group($group_name);
+            group.sample_size(10); 
+            
+            $(
+                group.bench_function(stringify!($algo_name), |b| {
+                    let contents = fs::read_to_string($file).expect("Failed to read file");
+                    let games: Vec<$board> = contents
+                        .lines()
+                        .map(|line| line.split_whitespace().next().expect("Expected sequence"))
+                        .map(|seq| <$board>::from_sequence(seq).expect("Expected to be able to parse test sequence into game object"))
+                        .collect();
+
+                    b.iter_batched(
+                        || games.clone(),
+                        |mut cloned_games| {
+                            for g in cloned_games.iter_mut() {
+                                $algo_func(black_box(g), black_box(&mut |_| {}));
+                            }
+                        },
+                        BatchSize::SmallInput,
+                    )
+                });
+            )*
+
+            group.finish();
+        }
+    };
+}
+
 pub fn criterion_benchmark(c: &mut Criterion) {
-    let contents = fs::read_to_string("tests/Test_L3_R1").expect("Failed to read file");
+    bench_algorithms!(c, "connect4_L3_R1_basic", "tests/Test_L3_R1", Connect4Basic, [
+        negamax => negamax,
+        negamax_half_pruned => negamax_half_pruned,
+        negamax_pruned => negamax_pruned,
+    ]);
 
-    let games: Vec<Connect4Basic> = contents
-        .lines()
-        .map(|line| line.split_whitespace().next().expect("Expected sequence"))
-        .map(|seq| Connect4Basic::from_sequence(seq).expect("Expected to be able to parse test sequence into game object"))
-        .collect();
-
-    let mut group = c.benchmark_group("connect4_benchmarks");
-    group.sample_size(10); 
-    
-    group.bench_function("negamax_L3_R1", |b| {
-        b.iter_batched(
-            || games.clone(),
-            |mut cloned_games| {
-                for g in cloned_games.iter_mut() {
-                    negamax(black_box(g), black_box(&mut |_| {}));
-                }
-            },
-            BatchSize::SmallInput,
-        )
-    });
-
-    group.bench_function("negamax_half_pruned_L3_R1", |b| {
-        b.iter_batched(
-            || games.clone(),
-            |mut cloned_games| {
-                for g in cloned_games.iter_mut() {
-                    negamax_half_pruned(black_box(g), black_box(&mut |_| {}));
-                }
-            },
-            BatchSize::SmallInput,
-        )
-    });
-
-    group.bench_function("negamax_pruned_L3_R1", |b| {
-        b.iter_batched(
-            || games.clone(),
-            |mut cloned_games| {
-                for g in cloned_games.iter_mut() {
-                    negamax_pruned(black_box(g), black_box(&mut |_| {}));
-                }
-            },
-            BatchSize::SmallInput,
-        )
-    });
-
-    group.finish();
+    bench_algorithms!(c, "connect4_L3_R1_bitboard", "tests/Test_L3_R1", Connect4BitBoard, [
+        negamax => negamax,
+        negamax_half_pruned => negamax_half_pruned,
+        negamax_pruned => negamax_pruned,
+    ]);
 }
 
 criterion_group!(benches, criterion_benchmark);

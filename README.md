@@ -9,7 +9,7 @@ cargo test
 cargo test --release --test correctness -- --ignored --test-threads=<N>
 
 # target
-cargo test --release --test correctness -- --ignored <test_file>::<algorithm>
+cargo test --release --test correctness -- --ignored <test_file>_<game_impl>::<algorithm>
 
 # example
 cargo test --release --test correctness -- --ignored l3_r1
@@ -21,7 +21,7 @@ cargo test --release --test correctness -- --ignored l3_r1
 cargo insta test --review --release --test metrics -- --ignored
 
 # target
-cargo insta test --review --release --test metrics -- --ignored <test_file>::<algorithm>
+cargo insta test --review --release --test metrics -- --ignored <test_file>_<game_impl>::<algorithm>
 
 # example
 cargo insta test --review --release --test metrics -- --ignored l3_r1
@@ -33,9 +33,13 @@ cargo insta test --review --release --test metrics -- --ignored l3_r1
 cargo bench --verbose
 
 # target
-cargo bench <algorithm>_<test_file> --verbose
+cargo bench <game_name>_<test_file>_<game_impl>/<algorithm> --verbose
 
 # example
 cargo bench negamax_pruned_L3_R1 --verbose
 ```
 
+### Profiling with Samply:
+```bash
+samply record cargo bench <game_name>_<test_file>_<game_impl>/<algorithm> --verbose
+```
