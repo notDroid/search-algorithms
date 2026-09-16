@@ -13,6 +13,7 @@ cargo test --release --test correctness -- --ignored <test_file>_<game_impl>::<a
 
 # example
 cargo test --release --test correctness -- --ignored l3_r1
+cargo test --release --test correctness -- --ignored l3_r1_bitboard::pruned
 ```
 
 ### Metrics:
@@ -36,10 +37,16 @@ cargo bench --verbose
 cargo bench <game_name>_<test_file>_<game_impl>/<algorithm> --verbose
 
 # example
-cargo bench negamax_pruned_L3_R1 --verbose
+cargo bench connect4_L3_R1_bitboard/negamax_pruned --verbose  
 ```
 
 ### Profiling with Samply:
 ```bash
 samply record cargo bench <game_name>_<test_file>_<game_impl>/<algorithm> --verbose
 ```
+
+### Todo
+- [] Add basic move ordering
+- [] Add transposition table
+- [] Add iterative deepening
+- 

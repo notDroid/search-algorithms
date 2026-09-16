@@ -15,6 +15,7 @@ macro_rules! bench_algorithms {
                     let contents = fs::read_to_string($file).expect("Failed to read file");
                     let games: Vec<$board> = contents
                         .lines()
+                        .take(10)
                         .map(|line| line.split_whitespace().next().expect("Expected sequence"))
                         .map(|seq| <$board>::from_sequence(seq).expect("Expected to be able to parse test sequence into game object"))
                         .collect();
@@ -44,6 +45,12 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     ]);
 
     bench_algorithms!(c, "connect4_L3_R1_bitboard", "tests/Test_L3_R1", Connect4BitBoard, [
+        negamax => negamax,
+        negamax_half_pruned => negamax_half_pruned,
+        negamax_pruned => negamax_pruned,
+    ]);
+
+    bench_algorithms!(c, "connect4_L2_R1_bitboard", "tests/Test_L2_R1", Connect4BitBoard, [
         negamax => negamax,
         negamax_half_pruned => negamax_half_pruned,
         negamax_pruned => negamax_pruned,

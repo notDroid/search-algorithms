@@ -16,7 +16,7 @@ macro_rules! correctness_tests {
                 fn $algo_name() {
                     for (line_num, (seq, expected)) in test_file_iterator($file).into_iter().enumerate() {
                         let mut board = <$board>::from_sequence(&seq).unwrap();
-
+                        dbg!(line_num);
                         let (score, _) = $algo_func(&mut board, &mut |_| {});
 
                         assert_eq!(score, expected, "Failed on line {}: sequence {}", line_num + 1, seq);
@@ -68,5 +68,5 @@ correctness_tests!(l2_r1_bitboard, "tests/Test_L2_R1", Connect4BitBoard, [
 
 correctness_tests!(l2_r2_bitboard, "tests/Test_L2_R2", Connect4BitBoard, [
     // half_pruned => negamax_half_pruned,
-    // pruned => negamax_pruned,
+    pruned => negamax_pruned,
 ]);
