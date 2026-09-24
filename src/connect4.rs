@@ -334,6 +334,7 @@ impl SearchTree for Connect4BitBoard {
     type Move = usize;
     type Score = i32;
 
+    #[inline]
     fn evaluate<F>(&mut self, mut on_ongoing: F) -> Option<Self::Score>
     where
         F: FnMut(Self::Move, &mut Self) -> ControlFlow<()> {

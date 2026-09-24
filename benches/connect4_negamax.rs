@@ -51,8 +51,8 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     ]);
 
     bench_algorithms!(c, "connect4_L2_R1_bitboard", "tests/Test_L2_R1", Connect4BitBoard, [
-        negamax => negamax,
-        negamax_half_pruned => negamax_half_pruned,
+        // negamax => negamax,
+        // negamax_half_pruned => negamax_half_pruned,
         negamax_pruned => negamax_pruned,
     ]);
 }
