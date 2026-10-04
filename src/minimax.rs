@@ -149,51 +149,54 @@ pub fn negamax_alpha_beta<T: ZeroSumTree, M: FnMut(MetricEvent)>(st: &mut T, m: 
     negamax_alpha_beta_core(st, None, None, m)
 }
 
-fn negamax_pruned_trans_core<T: ZeroSumTree + StateKey, M: FnMut(MetricEvent)>(transposition_table: &mut HashMap<T::Key, T::Score>, st: &mut T, opp_best_score: Option<T::Score>, mut prev_best_score: Option<T::Score>, m: &mut M) -> (T::Score, Option<T::Move>) {
+fn negamax_pruned_trans_lower_core<T: ZeroSumTree + StateKey, M: FnMut(MetricEvent)>(transposition_table: &mut HashMap<T::Key, T::Score>, st: &mut T, opp_best_score: Option<T::Score>, mut prev_best_score: Option<T::Score>, m: &mut M) -> (T::Score, Option<T::Move>) {
     m(MetricEvent::NodeVisited);
 
     let mut best_score = None;
     let mut best_game_move  = None;
 
+    // Used to detect upper bounds from not finding any good moves at this node
     let original_prev_best_score = prev_best_score;
 
+    // Use lower bound if present to see if we can prune and update the best line score
     if let Some(lower_bound_score) = transposition_table.get(&st.key()) {
-
         let lower_bound_score = *lower_bound_score;
+
+        // Prune if we exceed the opponents best move, they would play a different line
         if let Some(a) = opp_best_score
             && -lower_bound_score <= a {
             return (lower_bound_score, None)
         }
 
-        // best_score = Some(lower_bound_score);
-
-        // if prev_best_score.is_none_or(|prev_best_score| prev_best_score < lower_bound_score) {
-        //     prev_best_score = Some(lower_bound_score);
-        // }
+        // Increment current best score in this line
+        if prev_best_score.is_none_or(|prev_best_score| prev_best_score < lower_bound_score) {
+            prev_best_score = Some(lower_bound_score);
+        }
     }
 
     let terminal_score = st.evaluate(|game_move, ct| {
-        let (opp_score, _) = negamax_pruned_trans_core(transposition_table, ct, prev_best_score, opp_best_score, m);
+        let (opp_score, _) = negamax_pruned_trans_lower_core(transposition_table, ct, prev_best_score, opp_best_score, m);
 
-        // if pruned the opp score could be higher, meaning our score could be lower, so this is an upper bound <= prev_best_score.
+        // if pruned the opp score could be higher, meaning
+        // this is an upper bound where actual_score <= score <= prev_best_score.
         let score = -opp_score;
 
-        // DON'T TAKE EQUAL SCORES
+        // Increment current best score at this node
         if best_score.is_none_or(|best_score| best_score < score) {
             best_score = Some(score);
             best_game_move = Some(game_move);
         }
 
-        // Prune?
+        // Prune if we exceed the opponents best move, they would play a different line
         if let Some(a) = opp_best_score
-            && opp_score <= a // SKIP EVEN IF EQUAL
+            && opp_score <= a
         {
             m(MetricEvent::PruningTriggered);
             best_game_move = None;
             return ControlFlow::Break(());
         }
 
-        // New best for this line?
+        // Increment current best score in this line
         if prev_best_score.is_none_or(|prev_best_score| prev_best_score < score) {
             prev_best_score = Some(score);
         }
@@ -206,18 +209,22 @@ fn negamax_pruned_trans_core<T: ZeroSumTree + StateKey, M: FnMut(MetricEvent)>(t
         None => (best_score.expect("Non terminal state should have at least one move"), best_game_move)
     };
 
-    // this score is a lower bound on this positions score, 
-    // since we may prune early if its already too good for the opponent and stop looking for the actual score.
-    if original_prev_best_score.is_some_and(|prev_best_score| prev_best_score >= score) {
+    // 1. Upperbound: 
+    //  - If we don't find any scores better than our original best, we will never explore this path, 
+    //  - we would pass down an upperbound in this case which proves this path isn't worth it.
+    // 2. Lowerbound:
+    //  - If we pruned early we don't get our actual best score and stop early
+    // 3. Exact:
+    //  - If we don't prune early and we find a new best for this line
+    if original_prev_best_score.is_none_or(|prev_best_score| prev_best_score < score) {
         transposition_table.entry(st.key()).or_insert(score);
     }
-    
 
     (score, game_move)
 }
 
 pub fn negamax_pruned_trans<T: ZeroSumTree + StateKey, M: FnMut(MetricEvent)>(transposition_table: &mut HashMap<T::Key, T::Score>, st: &mut T, m: &mut M) -> (T::Score, Option<T::Move>) {
-    negamax_pruned_trans_core(transposition_table, st, None, None, m)
+    negamax_pruned_trans_lower_core(transposition_table, st, None, None, m)
 }
 
 pub fn negamax_pruned_trans0<T: ZeroSumTree + StateKey, M: FnMut(MetricEvent)>(st: &mut T, m: &mut M) -> (T::Score, Option<T::Move>) {

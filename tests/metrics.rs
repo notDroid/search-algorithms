@@ -41,6 +41,7 @@ metrics_tests!(l3_r1, "tests/Test_L3_R1", Connect4BitBoard, [
     basic => negamax,
     half_pruned => negamax_half_pruned,
     pruned => negamax_pruned,
+    alpha_beta => negamax_alpha_beta,
     pruned_trans => negamax_pruned_trans0,
 ]);
 
