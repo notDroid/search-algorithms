@@ -62,7 +62,7 @@ correctness_tests!(l3_r1_bitboard, "tests/Test_L3_R1", Connect4BitBoard, [
     alpha_beta => negamax_alpha_beta,
     pruned_trans_hashmap => negamax_pruned_trans_lower0,
     alpha_beta_trans => negamax_alpha_beta_trans_lower0,
-    pruned_trans_kv => negamax_pruned_trans_lower1,
+    // pruned_trans_kv => negamax_pruned_trans_lower1,
     pruned_trans_kv_fh => negamax_pruned_trans_lower2,
 ]);
 
@@ -70,10 +70,12 @@ correctness_tests!(l2_r1_bitboard, "tests/Test_L2_R1", Connect4BitBoard, [
     // half_pruned => negamax_half_pruned,
     // pruned => negamax_pruned,
     pruned_trans => negamax_pruned_trans_lower0,
+    pruned_trans_kv_fh => negamax_pruned_trans_lower2,
 ]);
 
 correctness_tests!(l2_r2_bitboard, "tests/Test_L2_R2", Connect4BitBoard, [
     // half_pruned => negamax_half_pruned,
     // pruned => negamax_pruned,
     pruned_trans => negamax_pruned_trans_lower0,
+    pruned_trans_kv_fh => negamax_pruned_trans_lower2_83,
 ]);

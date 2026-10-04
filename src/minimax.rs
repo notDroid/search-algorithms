@@ -310,20 +310,29 @@ pub fn negamax_pruned_trans_lower0<T: ZeroSumTree + StateKey, M: FnMut(MetricEve
     negamax_pruned_trans_lower(&mut transposition_table, st, m)
 }
 
-pub fn negamax_pruned_trans_lower1<T: ZeroSumTree + StateKey, M: FnMut(MetricEvent)>(
-    st: &mut T,
-    m: &mut M,
-) -> (T::Score, Option<T::Move>) {
-    let mut transposition_table = KVWithReplacement::new(65_536);
-    negamax_pruned_trans_lower(&mut transposition_table, st, m)
-}
+// pub fn negamax_pruned_trans_lower1<T: ZeroSumTree + StateKey, M: FnMut(MetricEvent)>(
+//     st: &mut T,
+//     m: &mut M,
+// ) -> (T::Score, Option<T::Move>) {
+//     let mut transposition_table = KVWithReplacement::new(65_536);
+//     negamax_pruned_trans_lower(&mut transposition_table, st, m)
+// }
 
 pub fn negamax_pruned_trans_lower2<T: ZeroSumTree + StateKey, M: FnMut(MetricEvent)>(
     st: &mut T,
     m: &mut M,
 ) -> (T::Score, Option<T::Move>) {
-    let mut transposition_table =
-        KVWithReplacement::new_with_hasher(65_536, FixedState::with_seed(42));
+    const N: usize = 65_536;
+    let mut transposition_table = KVWithReplacement::new_with_hasher(N, FixedState::with_seed(42));
+    negamax_pruned_trans_lower(&mut transposition_table, st, m)
+}
+
+pub fn negamax_pruned_trans_lower2_83<T: ZeroSumTree + StateKey, M: FnMut(MetricEvent)>(
+    st: &mut T,
+    m: &mut M,
+) -> (T::Score, Option<T::Move>) {
+    const N: usize = 8_388_593;
+    let mut transposition_table = KVWithReplacement::new_with_hasher(N, FixedState::with_seed(42));
     negamax_pruned_trans_lower(&mut transposition_table, st, m)
 }
 

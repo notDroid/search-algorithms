@@ -1,0 +1,5 @@
+---
+source: tests/metrics.rs
+expression: avg
+---
+2730270.15

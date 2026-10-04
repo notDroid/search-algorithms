@@ -15,7 +15,7 @@ macro_rules! metrics_tests {
                 #[test]
                 #[ignore]
                 fn $algo_name() {
-                    let mut nodes_visited = 0;
+                    let mut nodes_visited: u64 = 0;
                     let mut n_tests = 0;
 
                     for (seq, _) in test_file_iterator($file) {
@@ -44,8 +44,9 @@ metrics_tests!(l3_r1, "tests/Test_L3_R1", Connect4BitBoard, [
     alpha_beta => negamax_alpha_beta,
     pruned_trans => negamax_pruned_trans_lower0,
     alpha_beta_trans => negamax_alpha_beta_trans_lower0,
-    pruned_trans_kv => negamax_pruned_trans_lower1,
+    // pruned_trans_kv => negamax_pruned_trans_lower1,
     pruned_trans_kv_fh => negamax_pruned_trans_lower2,
+    pruned_trans_kv_fh_83 => negamax_pruned_trans_lower2_83
 ]);
 
 metrics_tests!(
@@ -55,6 +56,9 @@ metrics_tests!(
     [
     // half_pruned => negamax_half_pruned,
     // pruned => negamax_pruned,
+    // alpha_beta_trans => negamax_alpha_beta_trans_lower0,
+    alpha_beta_trans => negamax_alpha_beta_trans_lower0,
+    pruned_trans_kv_fh_83 => negamax_pruned_trans_lower2_83
 ]
 );
 
@@ -65,5 +69,8 @@ metrics_tests!(
     [
     // half_pruned => negamax_half_pruned,
     // pruned => negamax_pruned,
+    // alpha_beta_trans => negamax_alpha_beta_trans_lower0,
+    alpha_beta_trans => negamax_alpha_beta_trans_lower0,
+    pruned_trans_kv_fh_83 => negamax_pruned_trans_lower2_83
 ]
 );
