@@ -272,7 +272,7 @@ mod tests {
         type Key = usize;
 
         fn key(&self) -> Self::Key {
-            return self.node;
+            self.node
         }
     }
 

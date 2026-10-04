@@ -2,7 +2,7 @@ use criterion::{criterion_group, criterion_main, BatchSize, Criterion};
 use std::hint::black_box;
 use std::fs;
 use search_algorithms::connect4::{Connect4Basic, Connect4BitBoard};
-use search_algorithms::minimax::{negamax, negamax_pruned, negamax_half_pruned};
+use search_algorithms::minimax::{negamax, negamax_half_pruned, negamax_pruned, negamax_pruned_trans0};
 
 macro_rules! bench_algorithms {
     ($c:expr, $group_name:expr, $file:expr, $board:ty, [$($algo_name:ident => $algo_func:expr),* $(,)?]) => {
@@ -48,12 +48,14 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         negamax => negamax,
         negamax_half_pruned => negamax_half_pruned,
         negamax_pruned => negamax_pruned,
+        negamax_pruned_trans => negamax_pruned_trans0,
     ]);
 
     bench_algorithms!(c, "connect4_L2_R1_bitboard", "tests/Test_L2_R1", Connect4BitBoard, [
         // negamax => negamax,
         // negamax_half_pruned => negamax_half_pruned,
         negamax_pruned => negamax_pruned,
+        negamax_pruned_trans => negamax_pruned_trans0,
     ]);
 }
 

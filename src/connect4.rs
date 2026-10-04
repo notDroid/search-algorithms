@@ -1,4 +1,4 @@
-use crate::searchtree::{SearchTree, ZeroSumTree};
+use crate::searchtree::{SearchTree, StateKey, ZeroSumTree};
 use std::ops::ControlFlow;
 
 const ROWS: usize = 6;
@@ -268,6 +268,11 @@ impl Connect4BitBoard {
         1_u64 << (col*(ROWS+1))
     }
 
+    #[inline]
+    fn bottom_row_mask() -> u64 {
+        (0..COLUMNS).map(Self::bottom_mask).sum()
+    }
+
     /// Use parallel-scan like operation to check every angle in 2 operations. (Check the game finished the previous turn)
     /// 
     /// Horizontal:
@@ -351,6 +356,14 @@ impl SearchTree for Connect4BitBoard {
         }
 
         None
+    }
+}
+
+impl StateKey for Connect4BitBoard {
+    type Key = u64;
+
+    fn key(&self) -> Self::Key {
+        self.pos + self.mask + Self::bottom_row_mask()
     }
 }
 

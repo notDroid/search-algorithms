@@ -59,6 +59,7 @@ correctness_tests!(l3_r1_bitboard, "tests/Test_L3_R1", Connect4BitBoard, [
     basic => negamax,
     half_pruned => negamax_half_pruned,
     pruned => negamax_pruned,
+    pruned_trans => negamax_pruned_trans0,
 ]);
 
 correctness_tests!(l2_r1_bitboard, "tests/Test_L2_R1", Connect4BitBoard, [
