@@ -16,3 +16,6 @@ debug = true
 
 [profile.bench]
 debug = true
+
+[dependencies]
+foldhash = "0.2.0"

@@ -1,36 +1,46 @@
 use crate::kv::KVStore;
-use std::collections::hash_map::DefaultHasher;
-use std::hash::{Hash, Hasher};
+use std::hash::{BuildHasher, Hash, RandomState};
 
-pub struct KVWithReplacement<K, V> {
+pub struct KVWithReplacement<K, V, S: BuildHasher = RandomState> {
     n: usize,
     array: Vec<Option<(K, V)>>,
+    hasher_builder: S,
 }
 
-impl<K, V> KVWithReplacement<K, V>
+impl<K, V, S: BuildHasher> KVWithReplacement<K, V, S>
 where
     K: Hash + Eq + PartialEq + Copy,
     V: Copy,
 {
-    pub fn new(n: usize) -> Self {
+    pub fn new_with_hasher(n: usize, hasher_builder: S) -> Self {
         Self {
             n,
             array: vec![None; n],
+            hasher_builder,
         }
     }
 
     #[inline]
     pub fn hash(&self, key: K) -> usize {
-        let mut hasher = DefaultHasher::new();
-        key.hash(&mut hasher);
-        (hasher.finish() as usize) % self.n
+        (self.hasher_builder.hash_one(key) as usize) % self.n
     }
 }
 
-impl<K, V> KVStore for KVWithReplacement<K, V>
+impl<K, V> KVWithReplacement<K, V, RandomState>
 where
     K: Hash + Eq + PartialEq + Copy,
     V: Copy,
+{
+    pub fn new(n: usize) -> Self {
+        Self::new_with_hasher(n, RandomState::new())
+    }
+}
+
+impl<K, V, S> KVStore for KVWithReplacement<K, V, S>
+where
+    K: Hash + Eq + PartialEq + Copy,
+    V: Copy,
+    S: BuildHasher,
 {
     type K = K;
     type V = V;

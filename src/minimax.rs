@@ -1,6 +1,7 @@
 use crate::kv::{KVStore, StateKey};
 use crate::searchtree::ZeroSumTree;
 use crate::transposition_table::KVWithReplacement;
+use foldhash::fast::FixedState;
 use std::collections::HashMap;
 use std::ops::ControlFlow;
 
@@ -314,6 +315,15 @@ pub fn negamax_pruned_trans_lower1<T: ZeroSumTree + StateKey, M: FnMut(MetricEve
     m: &mut M,
 ) -> (T::Score, Option<T::Move>) {
     let mut transposition_table = KVWithReplacement::new(65_536);
+    negamax_pruned_trans_lower(&mut transposition_table, st, m)
+}
+
+pub fn negamax_pruned_trans_lower2<T: ZeroSumTree + StateKey, M: FnMut(MetricEvent)>(
+    st: &mut T,
+    m: &mut M,
+) -> (T::Score, Option<T::Move>) {
+    let mut transposition_table =
+        KVWithReplacement::new_with_hasher(65_536, FixedState::with_seed(42));
     negamax_pruned_trans_lower(&mut transposition_table, st, m)
 }
 
