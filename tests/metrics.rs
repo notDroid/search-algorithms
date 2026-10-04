@@ -68,6 +68,20 @@ metrics_tests!(
 );
 
 metrics_tests!(
+    l2_r1_ordered,
+    "tests/Test_L2_R1",
+    Connect4BitBoardTreeCenterOrder,
+    [
+    // half_pruned => negamax_half_pruned,
+    // pruned => negamax_pruned,
+    // alpha_beta_trans => negamax_alpha_beta_trans_lower0,
+    pruned_trans => negamax_pruned_trans_lower0,
+    alpha_beta_trans => negamax_alpha_beta_trans_lower0,
+    pruned_trans_kv_fh_83 => negamax_pruned_trans_lower2_83
+]
+);
+
+metrics_tests!(
     l2_r2,
     "tests/Test_L2_R2",
     Connect4BitBoardTreeDefaultOrder,
