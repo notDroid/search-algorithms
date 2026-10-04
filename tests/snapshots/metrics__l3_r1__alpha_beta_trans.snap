@@ -2,4 +2,4 @@
 source: tests/metrics.rs
 expression: avg
 ---
-844.329
+887.027

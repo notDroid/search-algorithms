@@ -9,5 +9,6 @@ pub fn test_file_iterator(file_path: &str) -> Vec<(String, i32)> {
             let parts: Vec<&str> = line.split_whitespace().collect();
 
             (parts[0].to_string(), parts[1].parse().unwrap())
-        }).collect()
+        })
+        .collect()
 }

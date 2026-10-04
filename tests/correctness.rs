@@ -1,8 +1,8 @@
 mod common;
 
-use search_algorithms::minimax::*;
 use common::test_file_iterator;
 use search_algorithms::connect4::{Connect4Basic, Connect4BitBoard};
+use search_algorithms::minimax::*;
 
 macro_rules! correctness_tests {
     ($mod_name:ident, $file:expr, $board:ty, [$($algo_name:ident => $algo_func:expr),* $(,)?]) => {
@@ -61,6 +61,7 @@ correctness_tests!(l3_r1_bitboard, "tests/Test_L3_R1", Connect4BitBoard, [
     pruned => negamax_pruned,
     alpha_beta => negamax_alpha_beta,
     pruned_trans => negamax_pruned_trans0,
+    alpha_beta_trans => negamax_alpha_beta_trans_lower0,
 ]);
 
 correctness_tests!(l2_r1_bitboard, "tests/Test_L2_R1", Connect4BitBoard, [

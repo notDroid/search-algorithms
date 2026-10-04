@@ -1,6 +1,6 @@
-use std::ops::{Neg, ControlFlow};
-use std::hash::Hash; 
-    
+use std::hash::Hash;
+use std::ops::{ControlFlow, Neg};
+
 pub trait SearchTree {
     type Move;
     type Score: Ord;

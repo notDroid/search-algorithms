@@ -65,7 +65,7 @@ impl Board {
         let row = self.col_lengths[col]
             .checked_sub(1)
             .expect("Column is empty");
-        
+
         self.col_lengths[col] = row;
         self.matrix[row][col] = None;
         self.size -= 1;
@@ -97,7 +97,7 @@ impl Board {
             }
             length
         };
-        
+
         // horizontal
         scan(0, 1) + scan(0, -1) + 1 >= 4
         // vertical
@@ -116,9 +116,7 @@ pub struct Connect4Basic {
     moves: Vec<(usize, usize, Player)>,
 }
 
-fn seq_iterator<'a>(
-    seq: &'a str,
-) -> impl Iterator<Item = Result<Column, &'static str>> + 'a {
+fn seq_iterator<'a>(seq: &'a str) -> impl Iterator<Item = Result<Column, &'static str>> + 'a {
     seq.chars().map(|ch| {
         ch.to_digit(10)
             .ok_or("Invalid character")?
@@ -140,7 +138,8 @@ impl Connect4Basic {
     }
 
     pub fn get_moves(&self) -> Vec<Column> {
-        self.board.column_lengths()
+        self.board
+            .column_lengths()
             .iter()
             .enumerate()
             .filter(|(_, rows)| **rows < ROWS)
@@ -164,7 +163,7 @@ impl Connect4Basic {
         let (row, col, player) = *self.moves.last()?;
         if self.board.is_connected(row, col, player) {
             Some((self.board.size().div_ceil(2) as i32) + MIN_SCORE)
-        } else if self.board.size() == ROWS*COLUMNS {
+        } else if self.board.size() == ROWS * COLUMNS {
             Some(0)
         } else {
             None
@@ -182,7 +181,7 @@ impl SearchTree for Connect4Basic {
 
     fn evaluate<F>(&mut self, mut on_ongoing: F) -> Option<Self::Score>
     where
-        F: FnMut(Self::Move, &mut Self) -> ControlFlow<()>
+        F: FnMut(Self::Move, &mut Self) -> ControlFlow<()>,
     {
         if let Some(score) = self.terminal_score() {
             return Some(score);
@@ -213,9 +212,9 @@ pub struct Connect4BitBoard {
     size: usize,
 
     /// Binary represenations of the boards as follows:
-    /// 
-    /// (ROWS+1) x COLUMNS 
-    /// 
+    ///
+    /// (ROWS+1) x COLUMNS
+    ///
     /// ```ascii
     /// .  .  .  .  .  .  .
     /// 5 12 19 26 33 40 47
@@ -223,13 +222,13 @@ pub struct Connect4BitBoard {
     /// 3 10 17 24 31 38 45
     /// 2  9 16 23 30 37 44
     /// 1  8 15 22 29 36 43
-    /// 0  7 14 21 28 35 42 
+    /// 0  7 14 21 28 35 42
     /// ```
-    /// 
+    ///
     /// Top row unused.
-    /// 
+    ///
     /// pos and mask together determine the board.
-    /// 
+    ///
     /// pos uses 1 for current player 0 for opposite.
     pos: u64,
     /// 1 for every played square
@@ -245,11 +244,11 @@ impl Connect4BitBoard {
         Ok(game)
     }
 
-    /// For pos: 
-    /// - Flip every previously played 1->0 and 0->1. 
+    /// For pos:
+    /// - Flip every previously played 1->0 and 0->1.
     ///     - This can be done using pos^mask: 0^0=0, x^1=~x.
     /// - Next played move will be 0 anyways, just need to update mask.
-    /// 
+    ///
     /// For mask:
     /// - mask + bottom_mask -> cascades that column so that 1 is the next row, rest undisturbed.
     /// - OR that to get new mask.
@@ -265,7 +264,7 @@ impl Connect4BitBoard {
     /// move a 1 to the bottom of the corresponding column
     #[inline]
     fn bottom_mask(col: usize) -> u64 {
-        1_u64 << (col*(ROWS+1))
+        1_u64 << (col * (ROWS + 1))
     }
 
     #[inline]
@@ -274,13 +273,13 @@ impl Connect4BitBoard {
     }
 
     /// Use parallel-scan like operation to check every angle in 2 operations. (Check the game finished the previous turn)
-    /// 
+    ///
     /// Horizontal:
     /// - Shift board 1 to the right then &
     /// - this creates a grid where every tile (excluding the first column) represents whether there is 2 in a row (going leftwards).
     /// - this again but shift twice to the right, then each tile (excluding the first 3 column) represents whether there is a 4 in a row (going leftwards).
     /// - if any tile is non-zero the overall u64 is non-zero and there is a connect4
-    /// 
+    ///
     /// Similiarily for other directions.
     #[inline]
     fn is_connected(&self) -> bool {
@@ -288,11 +287,11 @@ impl Connect4BitBoard {
 
         const SHIFTS: [usize; 4] = [
             // Horizontal
-            ROWS + 1, 
+            ROWS + 1,
             // Diagonal 1
-            ROWS, 
+            ROWS,
             // Diagonal 2
-            ROWS + 2, 
+            ROWS + 2,
             // Vertical
             1,
         ];
@@ -307,7 +306,7 @@ impl Connect4BitBoard {
     pub fn terminal_score(&self) -> Option<i32> {
         if self.is_connected() {
             Some((self.size.div_ceil(2) as i32) + MIN_SCORE)
-        } else if self.size == ROWS*COLUMNS {
+        } else if self.size == ROWS * COLUMNS {
             Some(0)
         } else {
             None
@@ -316,7 +315,7 @@ impl Connect4BitBoard {
 
     #[inline]
     fn top_mask(col: usize) -> u64 {
-        (1_u64 << (ROWS-1)) << (col*(ROWS+1))
+        (1_u64 << (ROWS - 1)) << (col * (ROWS + 1))
     }
 
     #[inline]
@@ -342,7 +341,8 @@ impl SearchTree for Connect4BitBoard {
     #[inline]
     fn evaluate<F>(&mut self, mut on_ongoing: F) -> Option<Self::Score>
     where
-        F: FnMut(Self::Move, &mut Self) -> ControlFlow<()> {
+        F: FnMut(Self::Move, &mut Self) -> ControlFlow<()>,
+    {
         if let Some(score) = self.terminal_score() {
             return Some(score);
         }
@@ -381,9 +381,12 @@ mod tests {
                 // Red plays col 1, Yellow plays 1, Red 2, Yellow 2, Red 3, Yellow 3, Red 4 -> Win!
                 let game = <$GameType>::from_sequence("1122334").unwrap();
                 let score = game.terminal_score();
-                
+
                 assert!(score.is_some(), "Game should be terminal");
-                assert!(score.unwrap() < 0, "Score should be negative from perspective of the losing player");
+                assert!(
+                    score.unwrap() < 0,
+                    "Score should be negative from perspective of the losing player"
+                );
             }
 
             #[test]
@@ -393,7 +396,10 @@ mod tests {
                 let score = game.terminal_score();
 
                 assert!(score.is_some());
-                assert!(score.unwrap() < 0, "Score should be negative from perspective of the losing player");
+                assert!(
+                    score.unwrap() < 0,
+                    "Score should be negative from perspective of the losing player"
+                );
             }
 
             #[test]
@@ -404,9 +410,12 @@ mod tests {
                 let score = game.terminal_score();
 
                 assert!(score.is_some());
-                assert!(score.unwrap() < 0, "Score should be negative from perspective of the losing player");
+                assert!(
+                    score.unwrap() < 0,
+                    "Score should be negative from perspective of the losing player"
+                );
             }
-            
+
             #[test]
             fn test_draw() {
                 // A full board sequence that ends in a draw
@@ -415,7 +424,10 @@ mod tests {
                 let score = game.terminal_score();
 
                 assert!(score.is_some());
-                assert!(score.unwrap() == 0, "Score should be 0 when the game is a draw");
+                assert!(
+                    score.unwrap() == 0,
+                    "Score should be 0 when the game is a draw"
+                );
             }
         };
     }
@@ -430,4 +442,3 @@ mod tests {
         generate_tests!(Connect4BitBoard);
     }
 }
-

@@ -1,15 +1,17 @@
-use criterion::{criterion_group, criterion_main, BatchSize, Criterion};
-use std::hint::black_box;
-use std::fs;
+use criterion::{BatchSize, Criterion, criterion_group, criterion_main};
 use search_algorithms::connect4::{Connect4Basic, Connect4BitBoard};
-use search_algorithms::minimax::{negamax, negamax_half_pruned, negamax_pruned, negamax_pruned_trans0};
+use search_algorithms::minimax::{
+    negamax, negamax_half_pruned, negamax_pruned, negamax_pruned_trans0,
+};
+use std::fs;
+use std::hint::black_box;
 
 macro_rules! bench_algorithms {
     ($c:expr, $group_name:expr, $file:expr, $board:ty, [$($algo_name:ident => $algo_func:expr),* $(,)?]) => {
         {
             let mut group = $c.benchmark_group($group_name);
-            group.sample_size(10); 
-            
+            group.sample_size(10);
+
             $(
                 group.bench_function(stringify!($algo_name), |b| {
                     let contents = fs::read_to_string($file).expect("Failed to read file");

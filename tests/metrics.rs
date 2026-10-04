@@ -1,34 +1,34 @@
 mod common;
 
-use insta::assert_debug_snapshot;
-use search_algorithms::minimax::*;
 use common::test_file_iterator;
-use search_algorithms::connect4::Connect4BitBoard; 
+use insta::assert_debug_snapshot;
+use search_algorithms::connect4::Connect4BitBoard;
+use search_algorithms::minimax::*;
 
 macro_rules! metrics_tests {
     ($mod_name:ident, $file:expr, $board:ty, [$($algo_name:ident => $algo_func:expr),* $(,)?]) => {
         mod $mod_name {
             #[allow(unused_imports)]
             use super::*;
-            
+
             $(
                 #[test]
                 #[ignore]
                 fn $algo_name() {
                     let mut nodes_visited = 0;
                     let mut n_tests = 0;
-                    
+
                     for (seq, _) in test_file_iterator($file) {
                         let mut board = <$board>::from_sequence(&seq).unwrap();
-                        
+
                         $algo_func(&mut board, &mut |event| match event {
                             MetricEvent::NodeVisited => nodes_visited += 1,
-                            MetricEvent::PruningTriggered => (),
+                            _ => (),
                         });
-                        
+
                         n_tests += 1;
                     }
-                    
+
                     let avg = if n_tests == 0 { 0.0 } else { nodes_visited as f64 / n_tests as f64 };
                     assert_debug_snapshot!(stringify!($algo_name), avg);
                 }
@@ -43,14 +43,25 @@ metrics_tests!(l3_r1, "tests/Test_L3_R1", Connect4BitBoard, [
     pruned => negamax_pruned,
     alpha_beta => negamax_alpha_beta,
     pruned_trans => negamax_pruned_trans0,
+    alpha_beta_trans => negamax_alpha_beta_trans_lower0,
 ]);
 
-metrics_tests!(l2_r1, "tests/Test_L2_R1", Connect4BitBoard, [
+metrics_tests!(
+    l2_r1,
+    "tests/Test_L2_R1",
+    Connect4BitBoard,
+    [
     // half_pruned => negamax_half_pruned,
     // pruned => negamax_pruned,
-]);
+]
+);
 
-metrics_tests!(l2_r2, "tests/Test_L2_R2", Connect4BitBoard, [
+metrics_tests!(
+    l2_r2,
+    "tests/Test_L2_R2",
+    Connect4BitBoard,
+    [
     // half_pruned => negamax_half_pruned,
     // pruned => negamax_pruned,
-]);
+]
+);
