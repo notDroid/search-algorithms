@@ -14,12 +14,20 @@ pub trait SearchTree {
         F: FnMut(Self::Move, &mut Self) -> ControlFlow<()>;
 }
 
+pub trait ZeroSumTree: SearchTree<Score = Self::ZScore> {
+    type ZScore: Copy + Ord + Neg<Output = Self::ZScore>;
+}
+
 pub trait StateKey {
     type Key: Hash + Eq + PartialEq + Copy;
 
     fn key(&self) -> Self::Key;
 }
 
-pub trait ZeroSumTree: SearchTree<Score = Self::ZScore> {
-    type ZScore: Copy + Ord + Neg<Output = Self::ZScore>;
+pub trait KVStore {
+    type K;
+    type V;
+
+    fn get(&self, key: Self::K) -> Self::K;
+    fn put(&mut self, key: Self::K, value: Self::V);
 }
