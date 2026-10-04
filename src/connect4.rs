@@ -1,5 +1,5 @@
-use crate::searchtree::{SearchTree, ZeroSumTree};
 use crate::kv::StateKey;
+use crate::searchtree::{SearchTree, ZeroSumTree};
 use std::ops::ControlFlow;
 
 const ROWS: usize = 6;

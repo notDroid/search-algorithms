@@ -1,5 +1,6 @@
-use crate::searchtree::{ZeroSumTree};
-use crate::kv::{StateKey};
+use crate::kv::{KVStore, StateKey};
+use crate::searchtree::ZeroSumTree;
+use crate::transposition_table::KVWithReplacement;
 use std::collections::HashMap;
 use std::ops::ControlFlow;
 
@@ -191,22 +192,25 @@ pub fn negamax_alpha_beta<T: ZeroSumTree, M: FnMut(MetricEvent)>(
     negamax_alpha_beta_core(st, None, None, m)
 }
 
-fn negamax_pruned_trans_lower_core<T: ZeroSumTree + StateKey, M: FnMut(MetricEvent)>(
-    transposition_table: &mut HashMap<T::Key, T::Score>,
+fn negamax_pruned_trans_lower_core<T, M, KV>(
+    transposition_table: &mut KV,
     st: &mut T,
     opp_best_score: Option<T::Score>,
     mut prev_best_score: Option<T::Score>,
     m: &mut M,
-) -> (T::Score, Option<T::Move>) {
+) -> (T::Score, Option<T::Move>)
+where
+    T: ZeroSumTree + StateKey,
+    M: FnMut(MetricEvent),
+    KV: KVStore<K = T::Key, V = T::Score>,
+{
     m(MetricEvent::NodeVisited);
 
     let mut best_score = None;
     let mut best_game_move = None;
 
     // Use lower bound if present to see if we can prune and update the best line score
-    if let Some(lower_bound_score) = transposition_table.get(&st.key()) {
-        let lower_bound_score = *lower_bound_score;
-
+    if let Some(lower_bound_score) = transposition_table.get(st.key()) {
         // Prune if we exceed the opponents best move, they would play a different line
         if let Some(a) = opp_best_score
             && -lower_bound_score <= a
@@ -278,17 +282,22 @@ fn negamax_pruned_trans_lower_core<T: ZeroSumTree + StateKey, M: FnMut(MetricEve
     //  - If we don't prune early and we find a new best for this line
     if original_prev_best_score.is_none_or(|prev_best_score| prev_best_score < score) {
         // New lowerbound must be better than old
-        transposition_table.insert(st.key(), score);
+        transposition_table.put(st.key(), score);
     }
 
     (score, game_move)
 }
 
-pub fn negamax_pruned_trans_lower<T: ZeroSumTree + StateKey, M: FnMut(MetricEvent)>(
-    transposition_table: &mut HashMap<T::Key, T::Score>,
+fn negamax_pruned_trans_lower<T, M, KV>(
+    transposition_table: &mut KV,
     st: &mut T,
     m: &mut M,
-) -> (T::Score, Option<T::Move>) {
+) -> (T::Score, Option<T::Move>)
+where
+    T: ZeroSumTree + StateKey,
+    M: FnMut(MetricEvent),
+    KV: KVStore<K = T::Key, V = T::Score>,
+{
     negamax_pruned_trans_lower_core(transposition_table, st, None, None, m)
 }
 
@@ -297,6 +306,14 @@ pub fn negamax_pruned_trans_lower0<T: ZeroSumTree + StateKey, M: FnMut(MetricEve
     m: &mut M,
 ) -> (T::Score, Option<T::Move>) {
     let mut transposition_table = HashMap::with_capacity(65_536);
+    negamax_pruned_trans_lower(&mut transposition_table, st, m)
+}
+
+pub fn negamax_pruned_trans_lower1<T: ZeroSumTree + StateKey, M: FnMut(MetricEvent)>(
+    st: &mut T,
+    m: &mut M,
+) -> (T::Score, Option<T::Move>) {
+    let mut transposition_table = KVWithReplacement::new(65_536);
     negamax_pruned_trans_lower(&mut transposition_table, st, m)
 }
 

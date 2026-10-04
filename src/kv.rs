@@ -1,5 +1,5 @@
-use std::hash::Hash;
 use std::collections::HashMap;
+use std::hash::Hash;
 
 pub trait StateKey {
     type Key: Hash + Eq + Copy;
@@ -15,7 +15,7 @@ pub trait KVStore {
     fn put(&mut self, key: Self::K, value: Self::V);
 }
 
-impl<K, V> KVStore for HashMap<K, V> 
+impl<K, V> KVStore for HashMap<K, V>
 where
     K: Hash + Eq + PartialEq + Copy,
     V: Copy,
@@ -25,7 +25,7 @@ where
 
     #[inline]
     fn get(&self, key: Self::K) -> Option<Self::V> {
-        HashMap::get(self, &key).map(|v| *v)
+        HashMap::get(self, &key).copied()
     }
 
     #[inline]
