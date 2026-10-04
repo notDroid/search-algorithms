@@ -1,4 +1,5 @@
-use crate::searchtree::{StateKey, ZeroSumTree};
+use crate::searchtree::{ZeroSumTree};
+use crate::kv::{StateKey};
 use std::collections::HashMap;
 use std::ops::ControlFlow;
 
