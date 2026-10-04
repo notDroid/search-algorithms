@@ -1,5 +1,5 @@
-use crate::kv::{KVStore, StateKey};
-use crate::searchtree::ZeroSumTree;
+use crate::kv::KVStore;
+use crate::searchtree::{ZeroSumTree, StateKey};
 use crate::transposition_table::KVWithReplacement;
 use foldhash::fast::FixedState;
 use std::collections::HashMap;

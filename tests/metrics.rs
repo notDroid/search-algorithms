@@ -2,7 +2,7 @@ mod common;
 
 use common::test_file_iterator;
 use insta::assert_debug_snapshot;
-use search_algorithms::connect4::Connect4BitBoard;
+use search_algorithms::connect4::{Connect4BitBoardTreeDefaultOrder, Connect4BitBoardTreeCenterOrder};
 use search_algorithms::minimax::*;
 
 macro_rules! metrics_tests {
@@ -37,7 +37,7 @@ macro_rules! metrics_tests {
     };
 }
 
-metrics_tests!(l3_r1, "tests/Test_L3_R1", Connect4BitBoard, [
+metrics_tests!(l3_r1, "tests/Test_L3_R1", Connect4BitBoardTreeDefaultOrder, [
     basic => negamax,
     half_pruned => negamax_half_pruned,
     pruned => negamax_pruned,
@@ -46,13 +46,18 @@ metrics_tests!(l3_r1, "tests/Test_L3_R1", Connect4BitBoard, [
     alpha_beta_trans => negamax_alpha_beta_trans_lower0,
     // pruned_trans_kv => negamax_pruned_trans_lower1,
     pruned_trans_kv_fh => negamax_pruned_trans_lower2,
-    pruned_trans_kv_fh_83 => negamax_pruned_trans_lower2_83
+    pruned_trans_kv_fh_83 => negamax_pruned_trans_lower2_83,
+]);
+
+metrics_tests!(l3_r1_ordered, "tests/Test_L3_R1", Connect4BitBoardTreeCenterOrder, [
+    alpha_beta => negamax_alpha_beta,
+    pruned_trans_kv_fh_83 => negamax_pruned_trans_lower2_83,
 ]);
 
 metrics_tests!(
     l2_r1,
     "tests/Test_L2_R1",
-    Connect4BitBoard,
+    Connect4BitBoardTreeDefaultOrder,
     [
     // half_pruned => negamax_half_pruned,
     // pruned => negamax_pruned,
@@ -65,7 +70,7 @@ metrics_tests!(
 metrics_tests!(
     l2_r2,
     "tests/Test_L2_R2",
-    Connect4BitBoard,
+    Connect4BitBoardTreeDefaultOrder,
     [
     // half_pruned => negamax_half_pruned,
     // pruned => negamax_pruned,

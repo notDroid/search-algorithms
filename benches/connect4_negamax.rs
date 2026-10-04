@@ -1,5 +1,5 @@
 use criterion::{BatchSize, Criterion, criterion_group, criterion_main};
-use search_algorithms::connect4::{Connect4Basic, Connect4BitBoard};
+use search_algorithms::connect4::{Connect4BasicTree, Connect4BitBoardTreeDefaultOrder};
 use search_algorithms::minimax::{
     negamax, negamax_alpha_beta_trans_lower0, negamax_half_pruned, negamax_pruned,
     negamax_pruned_trans_lower0, negamax_pruned_trans_lower2,
@@ -41,20 +41,20 @@ macro_rules! bench_algorithms {
 }
 
 pub fn criterion_benchmark(c: &mut Criterion) {
-    bench_algorithms!(c, "connect4_L3_R1_basic", "tests/Test_L3_R1", Connect4Basic, [
+    bench_algorithms!(c, "connect4_L3_R1_basic", "tests/Test_L3_R1", Connect4BasicTree, [
         negamax => negamax,
         negamax_half_pruned => negamax_half_pruned,
         negamax_pruned => negamax_pruned,
     ]);
 
-    bench_algorithms!(c, "connect4_L3_R1_bitboard", "tests/Test_L3_R1", Connect4BitBoard, [
+    bench_algorithms!(c, "connect4_L3_R1_bitboard", "tests/Test_L3_R1", Connect4BitBoardTreeDefaultOrder, [
         negamax => negamax,
         negamax_half_pruned => negamax_half_pruned,
         negamax_pruned => negamax_pruned,
         negamax_pruned_trans => negamax_pruned_trans_lower0,
     ]);
 
-    bench_algorithms!(c, "connect4_L2_R1_bitboard", "tests/Test_L2_R1", Connect4BitBoard, [
+    bench_algorithms!(c, "connect4_L2_R1_bitboard", "tests/Test_L2_R1", Connect4BitBoardTreeDefaultOrder, [
         // negamax => negamax,
         // negamax_half_pruned => negamax_half_pruned,
         negamax_pruned => negamax_pruned,

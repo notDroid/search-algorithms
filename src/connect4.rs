@@ -1,5 +1,4 @@
-use crate::kv::StateKey;
-use crate::searchtree::{SearchTree, ZeroSumTree};
+use crate::searchtree::{SearchTree, ZeroSumTree, StateKey};
 use std::ops::ControlFlow;
 
 const ROWS: usize = 6;
@@ -176,7 +175,16 @@ impl Connect4Basic {
     }
 }
 
-impl SearchTree for Connect4Basic {
+#[derive(Clone)]
+pub struct Connect4BasicTree(Connect4Basic);
+
+impl Connect4BasicTree {
+    pub fn from_sequence(seq: &str) -> Result<Self, &'static str> {
+        Ok(Self(Connect4Basic::from_sequence(seq)?))
+    }
+}
+
+impl SearchTree for Connect4BasicTree {
     type Move = Column;
     type Score = i32;
 
@@ -184,14 +192,14 @@ impl SearchTree for Connect4Basic {
     where
         F: FnMut(Self::Move, &mut Self) -> ControlFlow<()>,
     {
-        if let Some(score) = self.terminal_score() {
+        if let Some(score) = self.0.terminal_score() {
             return Some(score);
         }
 
-        for col in self.get_moves() {
-            self.make_move(col);
+        for col in self.0.get_moves() {
+            self.0.make_move(col);
             let control = on_ongoing(col, self);
-            self.undo_move(col);
+            self.0.undo_move(col);
 
             if control.is_break() {
                 return None;
@@ -202,7 +210,7 @@ impl SearchTree for Connect4Basic {
     }
 }
 
-impl ZeroSumTree for Connect4Basic {
+impl ZeroSumTree for Connect4BasicTree {
     type ZScore = i32;
 }
 
@@ -330,12 +338,27 @@ impl Connect4BitBoard {
     }
 
     #[inline]
+    pub fn open_columns_with_order(&self, order: impl Iterator<Item = usize>) -> impl Iterator<Item = usize> {
+        order.filter(|col| self.column_open(*col))
+    }
+    
+
+    #[inline]
     pub fn new() -> Self {
         Self::default()
     }
 }
 
-impl SearchTree for Connect4BitBoard {
+#[derive(Clone, Copy)]
+pub struct Connect4BitBoardTreeDefaultOrder(Connect4BitBoard);
+
+impl Connect4BitBoardTreeDefaultOrder {
+    pub fn from_sequence(seq: &str) -> Result<Self, &'static str> {
+        Ok(Self(Connect4BitBoard::from_sequence(seq)?))
+    }
+}
+
+impl SearchTree for Connect4BitBoardTreeDefaultOrder {
     type Move = usize;
     type Score = i32;
 
@@ -344,12 +367,12 @@ impl SearchTree for Connect4BitBoard {
     where
         F: FnMut(Self::Move, &mut Self) -> ControlFlow<()>,
     {
-        if let Some(score) = self.terminal_score() {
+        if let Some(score) = self.0.terminal_score() {
             return Some(score);
         }
 
-        for col in self.open_columns() {
-            let control = on_ongoing(col, &mut self.insert(col));
+        for col in self.0.open_columns() {
+            let control = on_ongoing(col, &mut Self(self.0.insert(col)));
 
             if control.is_break() {
                 return None;
@@ -360,15 +383,61 @@ impl SearchTree for Connect4BitBoard {
     }
 }
 
-impl StateKey for Connect4BitBoard {
+impl StateKey for Connect4BitBoardTreeDefaultOrder {
     type Key = u64;
 
     fn key(&self) -> Self::Key {
-        self.pos + self.mask + Self::bottom_row_mask()
+        self.0.pos + self.0.mask + Connect4BitBoard::bottom_row_mask()
     }
 }
 
-impl ZeroSumTree for Connect4BitBoard {
+impl ZeroSumTree for Connect4BitBoardTreeDefaultOrder {
+    type ZScore = i32;
+}
+
+#[derive(Clone, Copy)]
+pub struct Connect4BitBoardTreeCenterOrder(Connect4BitBoard);
+
+impl Connect4BitBoardTreeCenterOrder {
+    pub fn from_sequence(seq: &str) -> Result<Self, &'static str> {
+        Ok(Self(Connect4BitBoard::from_sequence(seq)?))
+    }
+}
+
+impl SearchTree for Connect4BitBoardTreeCenterOrder {
+    type Move = usize;
+    type Score = i32;
+
+    #[inline]
+    fn evaluate<F>(&mut self, mut on_ongoing: F) -> Option<Self::Score>
+    where
+        F: FnMut(Self::Move, &mut Self) -> ControlFlow<()>,
+    {
+        if let Some(score) = self.0.terminal_score() {
+            return Some(score);
+        }
+
+        for col in self.0.open_columns_with_order([3, 2, 4, 1, 5, 0, 6].into_iter()) {
+            let control = on_ongoing(col, &mut Self(self.0.insert(col)));
+
+            if control.is_break() {
+                return None;
+            }
+        }
+
+        None
+    }
+}
+
+impl StateKey for Connect4BitBoardTreeCenterOrder {
+    type Key = u64;
+
+    fn key(&self) -> Self::Key {
+        self.0.pos + self.0.mask + Connect4BitBoard::bottom_row_mask()
+    }
+}
+
+impl ZeroSumTree for Connect4BitBoardTreeCenterOrder {
     type ZScore = i32;
 }
 

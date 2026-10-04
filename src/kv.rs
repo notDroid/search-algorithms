@@ -1,12 +1,6 @@
 use std::collections::HashMap;
 use std::hash::Hash;
 
-pub trait StateKey {
-    type Key: Hash + Eq + Copy;
-
-    fn key(&self) -> Self::Key;
-}
-
 pub trait KVStore {
     type K: Hash + Eq + Copy;
     type V: Copy;
