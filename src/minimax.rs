@@ -210,6 +210,7 @@ fn negamax_pruned_trans_lower_core<T: ZeroSumTree + StateKey, M: FnMut(MetricEve
         if let Some(a) = opp_best_score
             && -lower_bound_score <= a
         {
+            m(MetricEvent::PruningTriggered);
             return (lower_bound_score, None);
         }
 
@@ -223,6 +224,7 @@ fn negamax_pruned_trans_lower_core<T: ZeroSumTree + StateKey, M: FnMut(MetricEve
     let original_prev_best_score = prev_best_score;
 
     let terminal_score = st.evaluate(|game_move, ct| {
+        m(MetricEvent::MovePlayed);
         let (opp_score, _) = negamax_pruned_trans_lower_core(
             transposition_table,
             ct,
@@ -289,7 +291,7 @@ pub fn negamax_pruned_trans_lower<T: ZeroSumTree + StateKey, M: FnMut(MetricEven
     negamax_pruned_trans_lower_core(transposition_table, st, None, None, m)
 }
 
-pub fn negamax_pruned_trans0<T: ZeroSumTree + StateKey, M: FnMut(MetricEvent)>(
+pub fn negamax_pruned_trans_lower0<T: ZeroSumTree + StateKey, M: FnMut(MetricEvent)>(
     st: &mut T,
     m: &mut M,
 ) -> (T::Score, Option<T::Move>) {
@@ -370,6 +372,7 @@ fn negamax_alpha_beta_trans_lower_core<T: ZeroSumTree + StateKey, M: FnMut(Metri
     // 1. Upperbound:
     //  - If we don't find any scores better than our original best, we will never explore this path,
     //  - we would pass down an upperbound in this case which proves this path isn't worth it.
+    //  - The upperbound is og_alpha, which is less accurate than recording the specific best score recieved.
     // 2. Lowerbound:
     //  - If we pruned early we don't get our actual best score and stop early
     // 3. Exact:
@@ -553,7 +556,7 @@ mod tests {
             node: 0,
             history: Vec::new(),
         };
-        let (score, best_move) = negamax_pruned_trans0(&mut game, &mut |_| {});
+        let (score, best_move) = negamax_pruned_trans_lower0(&mut game, &mut |_| {});
 
         // P1 should choose Left (leading to node 1 -> node 4 -> score 5)
         assert_eq!(score, 5);

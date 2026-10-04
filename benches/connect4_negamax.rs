@@ -1,7 +1,8 @@
 use criterion::{BatchSize, Criterion, criterion_group, criterion_main};
 use search_algorithms::connect4::{Connect4Basic, Connect4BitBoard};
 use search_algorithms::minimax::{
-    negamax, negamax_half_pruned, negamax_pruned, negamax_pruned_trans0,
+    negamax, negamax_alpha_beta_trans_lower0, negamax_half_pruned, negamax_pruned,
+    negamax_pruned_trans_lower0,
 };
 use std::fs;
 use std::hint::black_box;
@@ -50,14 +51,15 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         negamax => negamax,
         negamax_half_pruned => negamax_half_pruned,
         negamax_pruned => negamax_pruned,
-        negamax_pruned_trans => negamax_pruned_trans0,
+        negamax_pruned_trans => negamax_pruned_trans_lower0,
     ]);
 
     bench_algorithms!(c, "connect4_L2_R1_bitboard", "tests/Test_L2_R1", Connect4BitBoard, [
         // negamax => negamax,
         // negamax_half_pruned => negamax_half_pruned,
         negamax_pruned => negamax_pruned,
-        negamax_pruned_trans => negamax_pruned_trans0,
+        negamax_pruned_trans => negamax_pruned_trans_lower0,
+        alpha_beta_trans => negamax_alpha_beta_trans_lower0,
     ]);
 }
 
