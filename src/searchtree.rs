@@ -1,4 +1,5 @@
 use std::ops::{Neg, ControlFlow};
+use std::hash::Hash; 
     
 pub trait SearchTree {
     type Move;
@@ -11,6 +12,12 @@ pub trait SearchTree {
     fn evaluate<F>(&mut self, on_ongoing: F) -> Option<Self::Score>
     where
         F: FnMut(Self::Move, &mut Self) -> ControlFlow<()>;
+}
+
+pub trait StateKey {
+    type Key: Hash + Eq + PartialEq + Copy;
+
+    fn key(&self) -> Self::Key;
 }
 
 pub trait ZeroSumTree: SearchTree<Score = Self::ZScore> {
