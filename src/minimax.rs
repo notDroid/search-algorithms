@@ -161,7 +161,7 @@ fn negamax_pruned_trans_core<T: ZeroSumTree + StateKey, M: FnMut(MetricEvent)>(t
 }
 
 pub fn negamax_pruned_trans0<T: ZeroSumTree + StateKey, M: FnMut(MetricEvent)>(st: &mut T, m: &mut M) -> (T::Score, Option<T::Move>) {
-    let mut transposition_table = HashMap::new();
+    let mut transposition_table = HashMap::with_capacity(65_536);
     negamax_pruned_trans_core(&mut transposition_table, st, None, None, m)
 }
 
